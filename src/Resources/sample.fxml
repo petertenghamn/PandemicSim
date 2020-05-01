@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.text.Font?>
+<?import javafx.scene.text.Text?>
+
+
+<AnchorPane fx:controller="sample.Controller" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1">
+   <children>
+      <Text fx:id="foxPop" layoutX="179.0" layoutY="93.0" strokeType="OUTSIDE" strokeWidth="0.0" text="FoxPop" wrappingWidth="110.13671875">
+         <font>
+            <Font size="18.0" />
+         </font>
+      </Text>
+      <Text fx:id="rabbitPop" layoutX="179.0" layoutY="117.0" strokeType="OUTSIDE" strokeWidth="0.0" text="RabbitPop" wrappingWidth="110.13671875">
+         <font>
+            <Font size="18.0" />
+         </font>
+      </Text>
+      <Text fx:id="grassPop" layoutX="179.0" layoutY="141.0" strokeType="OUTSIDE" strokeWidth="0.0" text="GrassPop" wrappingWidth="110.13671875">
+         <font>
+            <Font size="18.0" />
+         </font>
+      </Text>
+   </children>
+</AnchorPane>

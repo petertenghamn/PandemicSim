@@ -1,10 +1,14 @@
 package Screen.Controller;
 
+import javafx.event.ActionEvent;
+
+import java.io.IOException;
+
 public interface Interface_MainMenuController {
-    public void runSim();
-    public void getResultList();
-    public void viewPrevResult();
-    public void setFoxPop();
-    public void setRabbitPop();
-    public void setGrassPop();
+    public void runSim(ActionEvent event) throws IOException;
+    public void getResultList(ActionEvent event) throws IOException;
+    public void viewPrevResult(ActionEvent event) throws IOException;
+    public int getFoxPop();
+    public int getRabbitPop();
+    public int getGrassPop();
 }
