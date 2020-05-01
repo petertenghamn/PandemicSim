@@ -8,7 +8,7 @@ public interface Interface_MainMenuController {
     public void runSim(ActionEvent event) throws IOException;
     public void getResultList(ActionEvent event) throws IOException;
     public void viewPrevResult(ActionEvent event) throws IOException;
-    public int getFoxPop();
-    public int getRabbitPop();
-    public int getGrassPop();
+    public void setFoxPop();
+    public void setRabbitPop();
+    public void setGrassPop();
 }

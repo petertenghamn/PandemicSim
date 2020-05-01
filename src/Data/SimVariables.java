@@ -1,7 +1,7 @@
 package Data;
 
-public class SimVariables {
-    int foxes;
-    int bunnies;
-    int grass;
+public class SimVariables{
+    public static int foxes;
+    public static int bunnies;
+    public static int grass;
 }
