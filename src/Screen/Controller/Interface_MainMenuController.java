@@ -9,6 +9,6 @@ public interface Interface_MainMenuController {
     public void getResultList(ActionEvent event) throws IOException;
     public void viewPrevResult(ActionEvent event) throws IOException;
     public void setFoxPop();
-    public void setRabbitPop();
+    public void setBunnyPop();
     public void setGrassPop();
 }
