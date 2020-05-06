@@ -6,6 +6,7 @@ import Algorithms.DynamicSubClasses.Fox;
 import Algorithms.DynamicSubClasses.Plant;
 import Data.SimVariables;
 
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Random;
 
@@ -26,7 +27,7 @@ public class DynamicAlgorithm implements Interface_DynamicAlgorithm {
         foxPopulation = init_Fox_Pop;
         grassPopulation = init_Grass_Pop;
 
-        MAP = new Object[MAP_HEIGHT][MAP_LENGTH];
+        MAP = new Object[MAP_LENGTH][MAP_HEIGHT];
 
         System.out.println("-------------------------------------------------");
         System.out.println("*** Initializing Dynamic Algorithm Simulation ***");
@@ -117,12 +118,12 @@ public class DynamicAlgorithm implements Interface_DynamicAlgorithm {
             column = random.nextInt(MAP_LENGTH);
             row = random.nextInt(MAP_HEIGHT);
 
-            if (MAP[row][column] != null) {
+            if (MAP[column][row] != null) {
                 p--;
             } else {
                 plant = new Plant(0, column, row);
                 plants.add(plant);
-                MAP[row][column] = plant;
+                MAP[column][row] = plant;
                 System.out.print(".");
             }
         }
@@ -133,12 +134,12 @@ public class DynamicAlgorithm implements Interface_DynamicAlgorithm {
             column = random.nextInt(MAP_LENGTH);
             row = random.nextInt(MAP_HEIGHT);
 
-            if (MAP[row][column] != null) {
+            if (MAP[column][row] != null) {
                 b--;
             } else {
                 bunny = new Bunny(0, 100, 0, 0, column, row);
                 bunnies.add(bunny);
-                MAP[row][column] = bunny;
+                MAP[column][row] = bunny;
                 System.out.print(".");
             }
         }
@@ -149,12 +150,12 @@ public class DynamicAlgorithm implements Interface_DynamicAlgorithm {
             column = random.nextInt(MAP_LENGTH);
             row = random.nextInt(MAP_HEIGHT);
 
-            if (MAP[row][column] != null) {
+            if (MAP[column][row] != null) {
                 f--;
             } else {
                 fox = new Fox(0, 100, 0, 0, column, row);
                 foxes.add(fox);
-                MAP[row][column] = fox;
+                MAP[column][row] = fox;
                 System.out.print(".");
             }
         }
@@ -210,12 +211,12 @@ public class DynamicAlgorithm implements Interface_DynamicAlgorithm {
                 if (y >= 0) {
                     if (y <= MAP_HEIGHT -1) {
                         // *** Check Action Begins Here ***
-                        if (MAP[y][x] == null){
+                        if (MAP[x][y] == null){
                             x_Empty = x;
                             y_Empty = y;
                         }
 
-                        return MAP[y][x];
+                        return MAP[x][y];
 
                     } else {
                         return checkCell(x, MAP_HEIGHT -1);
@@ -333,7 +334,7 @@ public class DynamicAlgorithm implements Interface_DynamicAlgorithm {
 
     private void reproduce(Plant plant){
         Plant babyPlant = new Plant(0,x_Empty,y_Empty);
-        MAP[y_Empty][x_Empty] = babyPlant;
+        MAP[x_Empty][y_Empty] = babyPlant;
         babyPlants.add(babyPlant);
     }
 
@@ -382,17 +383,17 @@ public class DynamicAlgorithm implements Interface_DynamicAlgorithm {
                     System.out.print("| ");
                 }
 
-                if (MAP[row][column] instanceof Plant){
+                if (MAP[column][row] instanceof Plant){
                     System.out.print("Grass" + " | ");
                 }
-                else if (MAP[row][column] instanceof Bunny){
+                else if (MAP[column][row] instanceof Bunny){
                     System.out.print("Bunny" + " | ");
                 }
-                else if (MAP[row][column] instanceof Fox){
+                else if (MAP[column][row] instanceof Fox){
                     System.out.print("Fox" + " | ");
                 }
                 else {
-                    System.out.print(MAP[row][column] + " | ");
+                    System.out.print(MAP[column][row] + " | ");
                 }
             }
         }
@@ -402,7 +403,7 @@ public class DynamicAlgorithm implements Interface_DynamicAlgorithm {
     }
 
     public static void main(String[] args) {
-        DynamicAlgorithm simulation = new DynamicAlgorithm(5, 5, 0, 0, 1);
+        DynamicAlgorithm simulation = new DynamicAlgorithm(3, 5, 0, 0, 1);
 
         int TOTAL_ITERATIONS = 6;
 
