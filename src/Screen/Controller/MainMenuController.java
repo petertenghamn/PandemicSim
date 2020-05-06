@@ -7,6 +7,7 @@ import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.TextField;
+import javafx.scene.text.Text;
 import javafx.stage.Stage;
 import sample.Controller;
 
@@ -18,6 +19,10 @@ public class MainMenuController implements Interface_MainMenuController {
     @FXML private TextField foxPop;
     @FXML private TextField rabbitPop;
     @FXML private TextField grassPop;
+
+    @FXML private Text fieldTesterFox;
+    @FXML private Text fieldTesterRabbit;
+    @FXML private Text fieldTesterGrass;
 
     // Class Variables
     private SimVariables simVariables;
@@ -37,31 +42,39 @@ public class MainMenuController implements Interface_MainMenuController {
     @Override
     public void runSim(javafx.event.ActionEvent event) throws IOException{
         //switch scene to start sim and passes through the input numbers (sample.fxml for testing)
-        setFoxPop();
-        setBunnyPop();
-        setGrassPop();
+        // switches only if input fields are numbers and not empty
+        fieldTesterFox.setText("");
+        fieldTesterRabbit.setText("");
+        fieldTesterGrass.setText("");
 
-        File path = new File("src/Resources/sample.fxml");
-        URL url = path.toURL();
+        if (isOnlyNumbers() && !isEmpty()) {
 
-        FXMLLoader loader = new FXMLLoader(url);
-        Parent root = loader.load();
+            setFoxPop();
+            setBunnyPop();
+            setGrassPop();
 
-        // Controller class for testing
-        Controller controller = loader.getController();
-        controller.setText(simVariables.foxes, simVariables.bunnies, simVariables.grass);
+            File path = new File("src/Resources/sample.fxml");
+            URL url = path.toURL();
 
-        Scene scene = new Scene(root);
-        Stage stage = (Stage)((Node)event.getSource()).getScene().getWindow();
+            FXMLLoader loader = new FXMLLoader(url);
+            Parent root = loader.load();
 
-        stage.setScene(scene);
-        stage.show();
+            // Controller class for testing
+            Controller controller = loader.getController();
+            controller.setText(simVariables.foxes, simVariables.bunnies, simVariables.grass);
+
+            Scene scene = new Scene(root);
+            Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+
+            stage.setScene(scene);
+            stage.show();
+        }
     }
 
     @Override
     public void getResultList(javafx.event.ActionEvent event) throws IOException{
         //switch to resultList scene (sample.fxml for testing)
-        File path = new File("src/Resources/sample.fxml");
+        File path = new File("src/Resources/StatsView.fxml");
         switchScene(event, path);
     }
 
@@ -97,7 +110,7 @@ public class MainMenuController implements Interface_MainMenuController {
     }
 
     // method for switching between scenes
-    private void switchScene(javafx.event.ActionEvent event, File path) throws IOException{
+    public void switchScene(javafx.event.ActionEvent event, File path) throws IOException{
         URL url = path.toURL();
         Parent root = FXMLLoader.load(url);
 
@@ -106,5 +119,48 @@ public class MainMenuController implements Interface_MainMenuController {
 
         window.setScene(scene);
         window.show();
+    }
+
+    // checks if input fields are empty
+    // displays red starts if not correct
+    private boolean isEmpty() {
+
+        if (foxPop.getText().isEmpty() || rabbitPop.getText().isEmpty() || grassPop.getText().isEmpty()){
+
+            if (foxPop.getText().isEmpty()){
+                fieldTesterFox.setText("***");
+            }
+
+            if (rabbitPop.getText().isEmpty()){
+                fieldTesterRabbit.setText("***");
+            }
+            if (grassPop.getText().isEmpty()){
+                fieldTesterGrass.setText("***");
+            }
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    // checks if input fields only numbers
+    // displays red starts if not correct
+    private boolean isOnlyNumbers() {
+        if (foxPop.getText().matches("[0-9]+") && rabbitPop.getText().matches("[0-9]+") &&
+                grassPop.getText().matches("[0-9]+")){
+            return true;
+        }
+
+        if (!foxPop.getText().matches("[0-9]+")){
+            fieldTesterFox.setText("***");
+        }
+        if (!rabbitPop.getText().matches("[0-9]+")){
+            fieldTesterRabbit.setText("***");
+        }
+        if (!grassPop.getText().matches("[0-9]+")){
+            fieldTesterGrass.setText("***");
+        }
+
+        return false;
     }
 }
