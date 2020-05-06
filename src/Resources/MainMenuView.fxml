@@ -6,33 +6,48 @@
 <?import javafx.scene.text.Font?>
 <?import javafx.scene.text.Text?>
 
-<AnchorPane prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="Screen.Controller.MainMenuController">
+<AnchorPane prefHeight="393.0" prefWidth="474.0" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="Screen.Controller.MainMenuController">
    <children>
-      <Text layoutX="249.0" layoutY="75.0" strokeType="OUTSIDE" strokeWidth="0.0" text="EcoSim">
+      <Text layoutX="186.0" layoutY="93.0" strokeType="OUTSIDE" strokeWidth="0.0" text="EcoSim">
          <font>
             <Font size="32.0" />
          </font>
       </Text>
-      <Text layoutX="203.0" layoutY="133.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Fox Population">
+      <Text fx:id="fieldTesterFox" fill="#fc0303" layoutX="350.0" layoutY="150.0" strokeType="OUTSIDE" strokeWidth="0.0">
+         <font>
+            <Font size="16.0" />
+         </font>
+      </Text>
+      <Text fx:id="fieldTesterRabbit" fill="#fc0303" layoutX="350.0" layoutY="180.0" strokeType="OUTSIDE" strokeWidth="0.0">
+         <font>
+            <Font size="16.0" />
+         </font>
+      </Text>
+      <Text fx:id="fieldTesterGrass" fill="#fc0303" layoutX="350.0" layoutY="210.0" strokeType="OUTSIDE" strokeWidth="0.0">
+         <font>
+            <Font size="16.0" />
+         </font>
+      </Text>
+      <Text layoutX="140.0" layoutY="151.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Fox Population">
          <font>
             <Font size="14.0" />
          </font>
       </Text>
-      <Text layoutX="203.0" layoutY="163.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Rabbit Population">
+      <Text layoutX="140.0" layoutY="181.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Rabbit Population">
          <font>
             <Font size="14.0" />
          </font>
       </Text>
-      <Text layoutX="203.0" layoutY="193.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Grass Population">
+      <Text layoutX="140.0" layoutY="211.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Grass Population">
          <font>
             <Font size="14.0" />
          </font>
       </Text>
-      <TextField fx:id="foxPop" layoutX="353.0" layoutY="115.0" prefHeight="25.0" prefWidth="44.0" />
-      <TextField fx:id="rabbitPop" layoutX="353.0" layoutY="145.0" prefHeight="25.0" prefWidth="44.0" />
-      <TextField fx:id="grassPop" layoutX="353.0" layoutY="175.0" prefHeight="25.0" prefWidth="44.0" />
-      <Button fx:id="runSimBtn" layoutX="201.0" layoutY="221.0" mnemonicParsing="false" onAction="#runSim" prefHeight="25.0" prefWidth="195.0" text="Run Simulation" />
-      <Button fx:id="resultListBtn" layoutX="201.0" layoutY="278.0" mnemonicParsing="false" onAction="#getResultList" prefHeight="25.0" prefWidth="97.0" text="Result List" />
-      <Button fx:id="prevResultBtn" layoutX="303.0" layoutY="278.0" mnemonicParsing="false" onAction="#viewPrevResult" text="Previous Result" />
+      <TextField fx:id="foxPop" layoutX="290.0" layoutY="133.0" prefHeight="25.0" prefWidth="44.0" />
+      <TextField fx:id="rabbitPop" layoutX="290.0" layoutY="163.0" prefHeight="25.0" prefWidth="44.0" />
+      <TextField fx:id="grassPop" layoutX="290.0" layoutY="193.0" prefHeight="25.0" prefWidth="44.0" />
+      <Button fx:id="runSimBtn" layoutX="160.0" layoutY="239.0" mnemonicParsing="false" onAction="#runSim" prefHeight="25.0" prefWidth="155.0" text="Run Simulation" />
+      <Button fx:id="resultListBtn" layoutX="160.0" layoutY="309.0" mnemonicParsing="false" onAction="#getResultList" prefHeight="25.0" prefWidth="155.0" text="Result List" />
+      <Button fx:id="prevResultBtn" layoutX="160.0" layoutY="274.0" mnemonicParsing="false" onAction="#viewPrevResult" prefHeight="25.0" prefWidth="155.0" text="Previous Result" />
    </children>
 </AnchorPane>
