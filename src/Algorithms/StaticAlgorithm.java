@@ -8,7 +8,7 @@ public class StaticAlgorithm implements Interface_StaticAlgorithm {
     public SimVariables calculate(SimVariables input) {
         int predator = input.foxes;
         int prey = input.bunnies;
-        int food = input.plants;
+        int food = input.grass;
 
         // using the variables
         // let predators kill a fixed % estimate

@@ -39,7 +39,7 @@ public class MainMenuController implements Interface_MainMenuController {
 
         // Controller class for testing
         Controller controller = loader.getController();
-        controller.setText(simVariables.foxes, simVariables.bunnies, simVariables.plants);
+        controller.setText(simVariables.foxes, simVariables.bunnies, simVariables.grass);
 
         Scene scene = new Scene(root);
         Stage stage = (Stage)((Node)event.getSource()).getScene().getWindow();
@@ -64,7 +64,7 @@ public class MainMenuController implements Interface_MainMenuController {
 
     @Override
     public void setGrassPop() {
-        simVariables.plants = Integer.parseInt(grassPop.getText());
+        simVariables.grass = Integer.parseInt(grassPop.getText());
     }
 
     @Override
