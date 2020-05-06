@@ -10,6 +10,7 @@ public class SimController implements Interface_SimController{
 
     @Override
     public SimVariables iterateDynamicAlgorithm(SimVariables input) {
+
         return null;
     }
 
