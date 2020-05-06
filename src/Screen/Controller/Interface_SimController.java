@@ -7,7 +7,7 @@ import Data.SimVariables;
 public interface Interface_SimController {
     public void runProgram();
     public SimVariables iterateDynamicAlgorithm(SimVariables input);
-    public void drawDynamicAlgorithm();
+    public void drawDynamicAlgorithm(SimVariables input);
     public SimVariables iterateStaticAlgorithm(SimVariables input);
-    public void drawStaticAlgorithm();
+    public void drawStaticAlgorithm(SimVariables input);
 }
