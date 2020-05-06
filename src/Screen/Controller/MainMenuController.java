@@ -19,6 +19,9 @@ public class MainMenuController implements Interface_MainMenuController {
     @FXML private TextField rabbitPop;
     @FXML private TextField grassPop;
 
+    // Class Variables
+    SimVariables simVariables = new SimVariables();
+
     @Override
     public void runSim(javafx.event.ActionEvent event) throws IOException{
         //switch scene to start sim and passes through the input numbers (sample.fxml for testing)
@@ -32,9 +35,11 @@ public class MainMenuController implements Interface_MainMenuController {
         FXMLLoader loader = new FXMLLoader(url);
         Parent root = loader.load();
 
+
+
         // Controller class for testing
         Controller controller = loader.getController();
-        controller.setText(SimVariables.foxes,SimVariables.bunnies, SimVariables.grass);
+        controller.setText(simVariables.foxes, simVariables.bunnies, simVariables.plants);
 
         Scene scene = new Scene(root);
         Stage stage = (Stage)((Node)event.getSource()).getScene().getWindow();
@@ -58,18 +63,18 @@ public class MainMenuController implements Interface_MainMenuController {
     }
 
     @Override
-    public void setFoxPop() {
-        SimVariables.foxes = Integer.parseInt(foxPop.getText());
+    public void setGrassPop() {
+        simVariables.plants = Integer.parseInt(grassPop.getText());
     }
 
     @Override
     public void setRabbitPop() {
-        SimVariables.bunnies = Integer.parseInt(rabbitPop.getText());
+        simVariables.bunnies = Integer.parseInt(rabbitPop.getText());
     }
 
     @Override
-    public void setGrassPop() {
-        SimVariables.grass = Integer.parseInt(grassPop.getText());
+    public void setFoxPop() {
+        simVariables.foxes = Integer.parseInt(foxPop.getText());
     }
 
     // method for switching between scenes

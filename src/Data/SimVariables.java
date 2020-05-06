@@ -4,16 +4,16 @@ public class SimVariables{
 
     public int foxes;
     public int bunnies;
-    public int grass;
+    public int plants;
 
     public SimVariables(){
 
     }
 
-    public SimVariables(int foxes, int bunnies, int grass){
+    public SimVariables(int plants, int bunnies, int foxes){
         this.foxes = foxes;
         this.bunnies = bunnies;
-        this.grass = grass;
+        this.plants = plants;
     }
 
 }
