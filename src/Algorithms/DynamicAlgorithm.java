@@ -43,17 +43,17 @@ public class DynamicAlgorithm implements Interface_DynamicAlgorithm {
      *                  reproduction
      *                  TODO age
      *          Bunny:
-     *                  reproduction
-     *                  energy levels
-     *                  hunger levels
-     *                  predator evasion
+     *                  TODO reproduction
+     *                  TODO energy levels
+     *                  TODO hunger levels
+     *                  TODO predator evasion
      *                  TODO age
      *                  TODO sight
      *          Fox:
-     *                  reproduction
-     *                  energy levels
-     *                  hunger levels
-     *                  prey chase
+     *                  TODO reproduction
+     *                  TODO energy levels
+     *                  TODO hunger levels
+     *                  TODO prey chase
      *                  TODO sight
      *
      *
