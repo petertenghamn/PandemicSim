@@ -33,12 +33,6 @@ class DynamicAlgorithmTest {
         simVariables.bunnies = INPUT_BUNNY;
         simVariables.foxes = INPUT_FOXES;
 
-        // This is for visual testing
-        System.out.println("*** Initial Populations ***");
-        System.out.println("Plant Population: " + simVariables.grass);
-        System.out.println("Bunny Population: " + simVariables.bunnies);
-        System.out.println("Fox Population:   " + simVariables.foxes);
-
         // Initialize the DynamicAlgorithm Simulation with hard coded inputs
         DynamicAlgorithm simulation = new DynamicAlgorithm(MAP_LENGTH, MAP_HEIGHT,
                 simVariables.grass,
@@ -48,13 +42,12 @@ class DynamicAlgorithmTest {
         for (int i = 0; i < TOTAL_ITERATIONS; i++){
             simulation.printMAP();
             simulation.calculate(simVariables);
-        }
-        simulation.printMAP();
 
-        // Results after the iterations
-        System.out.println("Plant Population: " + simVariables.grass);
-        System.out.println("Bunny Population: " + simVariables.bunnies);
-        System.out.println("Fox Population:   " + simVariables.foxes);
+            // Results after the iterations
+            System.out.println("Grass Population: " + simVariables.grass);
+            System.out.println("Bunny Population: " + simVariables.bunnies);
+            System.out.println("Fox Population:   " + simVariables.foxes);
+        }
 
         resultedGrassPopulation = simVariables.grass;
         assertEquals(expectedGrassPopulation, resultedGrassPopulation);
