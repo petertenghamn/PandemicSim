@@ -11,7 +11,7 @@ public class Grass extends Plant {
     }
 
     private static final double AGE_MAX = 25 ; // see source
-    private static final int SIGHT = 0; // MIN = 0
+    private static final int SIGHT = 1; // MIN = 1
     private static final String SPECIES = "Grass"; // The name of the species of animal
 
 }

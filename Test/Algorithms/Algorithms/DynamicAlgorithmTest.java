@@ -39,9 +39,18 @@ class DynamicAlgorithmTest {
                 simVariables.bunnies,
                 simVariables.foxes);
 
+        simulation.printMAP();
+
+        // Results after the iterations
+        System.out.println("Grass Population: " + simVariables.grass);
+        System.out.println("Bunny Population: " + simVariables.bunnies);
+        System.out.println("Fox Population:   " + simVariables.foxes);
+
         for (int i = 0; i < TOTAL_ITERATIONS; i++){
-            simulation.printMAP();
+
             simulation.calculate(simVariables);
+
+            simulation.printMAP();
 
             // Results after the iterations
             System.out.println("Grass Population: " + simVariables.grass);

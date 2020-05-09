@@ -9,13 +9,14 @@ import Algorithms.Plants.Plant;
  * @see Plant
  */
 public abstract class Animal {
-    public Animal(int x, int y, String species, double maxAge, int sight, double age, int energy, int sexNeed, int hunger) {
+    public Animal(int x, int y, String species, double maxAge, int sight, double age, boolean isFemale, int energy, int sexNeed, int hunger) {
         this.x = x;
         this.y = y;
         this.age = age;
         this.energy = energy;
         this.sexNeed = sexNeed;
         this.hunger = hunger;
+        this.isFemale = isFemale;
 
         this.species = species;
         this.maxAge = maxAge;
@@ -26,6 +27,7 @@ public abstract class Animal {
     private int x; // MIN = 0 | MAX = GRID_LENGTH
     private int y; // MIN = 0 | MAX = GRID_HEIGHT
     private double age; // MIN = 0 | MAX depends on species
+    private boolean isFemale; // The determination of the animal's sex True = Female | False = Male
     private int energy; // MIN = 0 | MAX = 100
     private int sexNeed; // MIN = 0 | MAX = 100
     private int hunger; // MIN = 0 | MAX = 100
@@ -33,7 +35,7 @@ public abstract class Animal {
     // *** Generated in Constructor of SubClass ***
     private String species; // Name of the species
     private double maxAge; // Maximum age of the species
-    private int sight; // How many grid spaces the animal can spot other entities
+    private int sight; // How many grid spaces the animal can spot other entities hardcoded MAX = 3 see DynamicAlgorithm
 
     public int getX() {
         return x;

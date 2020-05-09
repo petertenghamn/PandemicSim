@@ -25,7 +25,7 @@ public class DynamicAlgorithm implements Interface_DynamicAlgorithm {
         MAP_LENGTH = init_MAP_LENGTH;
         MAP_HEIGHT = init_MAP_HEIGHT;
 
-        MAP = new Object[MAP_LENGTH][MAP_HEIGHT];
+        MAP = new ArrayList[MAP_LENGTH][MAP_HEIGHT];
 
         System.out.println("-------------------------------------------------");
         System.out.println("*** Initializing Dynamic Algorithm Simulation ***");
@@ -50,11 +50,11 @@ public class DynamicAlgorithm implements Interface_DynamicAlgorithm {
      *                  TODO IMPLEMENT Life Stages ( BABY | YOUNG ADULT | ADULT )
      *
      *          Bunny:
-     *                  TODO age
+     *                  age
      *                  TODO sight
      *                  TODO gender
      *                  TODO reproduction
-     *                  TODO dying of old age
+     *                  dying of old age
      *                  TODO food search
      *                  TODO energy levels
      *                  TODO hunger levels
@@ -62,11 +62,11 @@ public class DynamicAlgorithm implements Interface_DynamicAlgorithm {
      *                  TODO IMPLEMENT Life Stages ( BABY | YOUNG ADULT | ADULT )
      *
      *          Fox:
-     *                  TODO age
+     *                  age
      *                  TODO sight
      *                  TODO gender
      *                  TODO reproduction
-     *                  TODO dying of old age
+     *                  dying of old age
      *                  TODO food search
      *                  TODO energy levels
      *                  TODO hunger levels
@@ -82,7 +82,7 @@ public class DynamicAlgorithm implements Interface_DynamicAlgorithm {
         // used to track empty cells for movement and plant reproduction
         int emptyCount;
 
-        // Iterates through plant turns
+        // Iterates through grass turns
         for (Plant plant: grass){
 
             age(plant);
@@ -94,7 +94,20 @@ public class DynamicAlgorithm implements Interface_DynamicAlgorithm {
             }
         }
 
-        // *** Remove all dead things before updating the map ***
+        // Iterates through the bunnies turns
+        for (Bunny bunny: bunnies){
+
+            age(bunny);
+
+            checkSurroundings(bunny);
+        }
+
+        // Iterates through the foxes turns
+        for (Fox fox: foxes){
+
+        }
+
+        // *** Remove all dead things BEFORE updating the map ***
 
         // Removes deadPlants from their respective ArrayLists
         grass.removeAll(deadPlants);
@@ -105,12 +118,7 @@ public class DynamicAlgorithm implements Interface_DynamicAlgorithm {
 
         updateMap();
 
-        // Updates the SimVariables
-        input.grass = grass.size();
-        input.bunnies = bunnies.size();
-        input.foxes = foxes.size();
-
-        // *** New entities must be added after SimVariables have been updated ***
+        // *** ADD all the babies AFTER updating the map ***
 
         grass.addAll(babyGrass); // When babyGrass becomes adults add them to the grass list
 
@@ -119,6 +127,10 @@ public class DynamicAlgorithm implements Interface_DynamicAlgorithm {
         deadAnimals.clear(); // Clear the list of deadAnimals when all the animals have been removed from other Lists
         babyGrass.clear(); // Clear List of babyAnimals when all new entities have been added to other lists
 
+        // Updates the SimVariables
+        input.grass = grass.size();
+        input.bunnies = bunnies.size();
+        input.foxes = foxes.size();
 
         return input;
     }
@@ -126,7 +138,6 @@ public class DynamicAlgorithm implements Interface_DynamicAlgorithm {
     // Constants
     public final int MAP_LENGTH; // Number of Columns in grid
     public final int MAP_HEIGHT; // Number of Rows in grid
-    private final int DIRECTIONS_CARDINAL = 8; // Direction an Object can look (1=UP | 2=UP-RIGHT | 3=RIGHT | 4=DOWN-RIGHT | 5=DOWN | 6=DOWN-LEFT | 7=LEFT | 8=UP-LEFT)
 
     // Variables
     private int x_Empty; // X Coordinate of spotted empty cell
@@ -154,7 +165,7 @@ public class DynamicAlgorithm implements Interface_DynamicAlgorithm {
 
     // Widgets
     private Random random = new Random(); // Random Generator used in random placement in initialization
-    public Object[][] MAP; // The environment in which the simulation takes place
+    private ArrayList<Object>[][] MAP; // The environment in which the simulation takes place
 
     /* ---------------------------------------------------------------------------------------------------
         *** The methods in this section should only be called by the constructor of the class ***
@@ -202,24 +213,32 @@ public class DynamicAlgorithm implements Interface_DynamicAlgorithm {
      * This method populates the map using the stats sent to the constructor of the class
      */
     private void initializeMap(int grassPopulation, int bunnyPopulation, int foxPopulation) {
+
         int column;
         int row;
 
         Grass grass = new Grass(0, 0,0);
-        Bunny bunny = new Bunny(0, 0, 0);
-        Fox fox = new Fox(0, 0, 0);
+        Bunny bunny = new Bunny(0, 0, 0, false);
+        Fox fox = new Fox(0, 0, 0, false);
+
+        // Initializes the grid's rows
+        for (int x = 0; x < MAP_LENGTH; x++) {
+            for (int y = 0; y < MAP_HEIGHT; y++) {
+                MAP[x][y] = new ArrayList<>();
+            }
+        }
 
         System.out.print("Generating Plants: ");
         for (int p = 0; p < grassPopulation; p++) {
             column = random.nextInt(MAP_LENGTH);
             row = random.nextInt(MAP_HEIGHT);
 
-            if (MAP[column][row] != null) {
+            if (MAP[column][row].size() != 0) {
                 p--;
             } else {
                 grass = new Grass(column, row, random.nextInt((int) grass.getMaxAge()));
                 this.grass.add(grass);
-                MAP[column][row] = grass;
+                MAP[column][row].add(grass);
                 System.out.print(".");
             }
         }
@@ -230,12 +249,12 @@ public class DynamicAlgorithm implements Interface_DynamicAlgorithm {
             column = random.nextInt(MAP_LENGTH);
             row = random.nextInt(MAP_HEIGHT);
 
-            if (MAP[column][row] != null) {
+            if (MAP[column][row].size() != 0) {
                 b--;
             } else {
-                bunny = new Bunny(column, row, random.nextInt((int) bunny.getMaxAge()));
+                bunny = new Bunny(column, row, random.nextInt((int) bunny.getMaxAge()), random.nextBoolean());
                 bunnies.add(bunny);
-                MAP[column][row] = bunny;
+                MAP[column][row].add(bunny);
                 System.out.print(".");
             }
         }
@@ -246,12 +265,12 @@ public class DynamicAlgorithm implements Interface_DynamicAlgorithm {
             column = random.nextInt(MAP_LENGTH);
             row = random.nextInt(MAP_HEIGHT);
 
-            if (MAP[column][row] != null) {
+            if (MAP[column][row].size() != 0) {
                 f--;
             } else {
-                fox = new Fox(column, row, random.nextInt((int) fox.getMaxAge()));
+                fox = new Fox(column, row, random.nextInt((int) fox.getMaxAge()), random.nextBoolean());
                 foxes.add(fox);
-                MAP[column][row] = fox;
+                MAP[column][row].add(fox);
                 System.out.print(".");
             }
         }
@@ -280,6 +299,21 @@ public class DynamicAlgorithm implements Interface_DynamicAlgorithm {
        ---------------------------------------------------------------------------------------------------
      */
 
+    /**
+     * Plants check their surroundings but stop looking as soon as they find an empty place.
+     * Plants search pattern is random and can also be affected by:
+     *      sight: MIN - 1 MAX - 1 (hardcoded)
+     *
+     *  methods used:
+     *      generateRandomOrder();
+     *      checkCell();
+     *
+     *  variables changed:
+     *      spottedSurroundings
+     *
+     * @param plant the plant that will look around it's coordinates
+     * @return The empty spots that the plant has found (1 | 0)
+     */
     private int checkSurroundings(Plant plant){
 
         ArrayList<Integer> checkingOrder = generateRandomOrder(plant.getSight()); // The order which cells will be checked
@@ -344,7 +378,22 @@ public class DynamicAlgorithm implements Interface_DynamicAlgorithm {
         return 0;
     }
 
-    private int checkSurroundings(Animal animal){
+    /**
+     * Checks the surrounding cells of the animals based on:
+     *      sight: MIN of 1 - MAX of 3 (hardcoded)
+     *      animal x & y coordinates
+     *
+     *  methods used:
+     *      generateRandomOrder();
+     *      checkCell();
+     *
+     *  variables changed:
+     *      spottedSurroundings
+     *
+     *
+     * @param animal the animal that will look around it's coordinates
+     */
+    private void checkSurroundings(Animal animal){
 
         ArrayList<Integer> checkingOrder = generateRandomOrder(animal.getSight()); // The order which cells will be checked
         Object spottedObject = animal;
@@ -355,41 +404,153 @@ public class DynamicAlgorithm implements Interface_DynamicAlgorithm {
         // Adds itself as a spotted object
         spottedSurroundings.add(spottedObject);
 
-        // Goes through all the cells the Plant can see
-        for (int checking: checkingOrder){
+        // Goes through all the cells the Animal can see
+        for (int checking: checkingOrder) {
 
-            // The possible cells that the Plant can check
-            switch (checking){
-                case 1:{
-                    spottedObject = checkCell(animal.getX(), animal.getY()-1); // UP
+            // The possible cells that the Animal can check
+            switch (checking) {
+                case 1: {
+                    spottedObject = checkCell(animal.getX(), animal.getY() - 1); // UP
                     break;
                 }
-                case 2:{
-                    spottedObject = checkCell(animal.getX()+1, animal.getY()-1); // UP - RIGHT
+                case 2: {
+                    spottedObject = checkCell(animal.getX() + 1, animal.getY() - 1); // UP - RIGHT
                     break;
                 }
-                case 3:{
-                    spottedObject = checkCell(animal.getX()+1, animal.getY()); // RIGHT
+                case 3: {
+                    spottedObject = checkCell(animal.getX() + 1, animal.getY()); // RIGHT
                     break;
                 }
-                case 4:{
-                    spottedObject = checkCell(animal.getX()+1, animal.getY()+1); // DOWN - RIGHT
+                case 4: {
+                    spottedObject = checkCell(animal.getX() + 1, animal.getY() + 1); // DOWN - RIGHT
                     break;
                 }
-                case 5:{
-                    spottedObject = checkCell(animal.getX(), animal.getY()+1); // DOWN
+                case 5: {
+                    spottedObject = checkCell(animal.getX(), animal.getY() + 1); // DOWN
                     break;
                 }
-                case 6:{
-                    spottedObject = checkCell(animal.getX()-1, animal.getY()+1); // DOWN - LEFT
+                case 6: {
+                    spottedObject = checkCell(animal.getX() - 1, animal.getY() + 1); // DOWN - LEFT
                     break;
                 }
-                case 7:{
-                    spottedObject = checkCell(animal.getX()-1, animal.getY()); // LEFT
+                case 7: {
+                    spottedObject = checkCell(animal.getX() - 1, animal.getY()); // LEFT
                     break;
                 }
-                case 8:{
-                    spottedObject = checkCell(animal.getX()-1, animal.getY()-1); // UP - LEFT
+                case 8: {
+                    spottedObject = checkCell(animal.getX() - 1, animal.getY() - 1); // UP - LEFT
+                    break;
+                }
+                case 9: {
+                    spottedObject = checkCell(animal.getX(), animal.getY() - 1 - 1); // UP - UP
+                    break;
+                }
+                case 10: {
+                    spottedObject = checkCell(animal.getX() + 1, animal.getY() - 1 - 1); // UP - UP - RIGHT
+                    break;
+                }
+                case 11: {
+                    spottedObject = checkCell(animal.getX() + 1 + 1, animal.getY() - 1); // UP - RIGHT - RIGHT
+                    break;
+                }
+                case 12: {
+                    spottedObject = checkCell(animal.getX() + 1 + 1, animal.getY()); // RIGHT - RIGHT
+                    break;
+                }
+                case 13: {
+                    spottedObject = checkCell(animal.getX() + 1 + 1, animal.getY() + 1); // DOWN - RIGHT - RIGHT
+                    break;
+                }
+                case 14: {
+                    spottedObject = checkCell(animal.getX() + 1, animal.getY() + 1 + 1); // DOWN - DOWN - RIGHT
+                    break;
+                }
+                case 15: {
+                    spottedObject = checkCell(animal.getX(), animal.getY() + 1 + 1); // DOWN - DOWN
+                    break;
+                }
+                case 16: {
+                    spottedObject = checkCell(animal.getX() - 1, animal.getY() + 1 + 1); // DOWN - DOWN - LEFT
+                    break;
+                }
+                case 17: {
+                    spottedObject = checkCell(animal.getX() - 1 - 1, animal.getY() + 1); // DOWN - LEFT - LEFT
+                    break;
+                }
+                case 18: {
+                    spottedObject = checkCell(animal.getX() - 1 - 1, animal.getY()); // LEFT - LEFT
+                    break;
+                }
+                case 19: {
+                    spottedObject = checkCell(animal.getX() - 1 - 1, animal.getY() - 1); // UP - LEFT - LEFT
+                    break;
+                }
+                case 20: {
+                    spottedObject = checkCell(animal.getX() - 1, animal.getY() - 1 - 1); // UP - UP -LEFT
+                    break;
+                }
+                case 21: {
+                    spottedObject = checkCell(animal.getX(), animal.getY() - 1 - 1 - 1); // UP - UP - UP
+                    break;
+                }
+                case 22: {
+                    spottedObject = checkCell(animal.getX() + 1, animal.getY() - 1 - 1 - 1); // UP - UP - UP - RIGHT
+                    break;
+                }
+                case 23: {
+                    spottedObject = checkCell(animal.getX() + 1 + 1, animal.getY() - 1 - 1); // UP - UP - RIGHT - RIGHT
+                    break;
+                }
+                case 24: {
+                    spottedObject = checkCell(animal.getX() + 1 + 1 + 1, animal.getY() - 1); // UP - RIGHT - RIGHT - RIGHT
+                    break;
+                }
+                case 25: {
+                    spottedObject = checkCell(animal.getX() + 1 + 1 + 1, animal.getY()); // RIGHT - RIGHT - RIGHT
+                    break;
+                }
+                case 26: {
+                    spottedObject = checkCell(animal.getX() + 1 + 1 + 1, animal.getY() + 1); // DOWN - RIGHT - RIGHT - RIGHT
+                    break;
+                }
+                case 27: {
+                    spottedObject = checkCell(animal.getX() + 1 + 1, animal.getY() + 1 + 1); // DOWN - DOWN - RIGHT - RIGHT
+                    break;
+                }
+                case 28: {
+                    spottedObject = checkCell(animal.getX() + 1, animal.getY() + 1 + 1 + 1); // DOWN - DOWN - DOWN - RIGHT
+                    break;
+                }
+                case 29: {
+                    spottedObject = checkCell(animal.getX(), animal.getY() + 1 + 1 + 1); // DOWN - DOWN- DOWN
+                    break;
+                }
+                case 30: {
+                    spottedObject = checkCell(animal.getX() - 1, animal.getY() + 1 + 1 + 1); // DOWN - DOWN- DOWN - LEFT
+                    break;
+                }
+                case 31: {
+                    spottedObject = checkCell(animal.getX() - 1 - 1, animal.getY() + 1 + 1); // DOWN - DOWN - LEFT - LEFT
+                    break;
+                }
+                case 32: {
+                    spottedObject = checkCell(animal.getX() - 1 - 1 - 1, animal.getY() + 1); // DOWN - LEFT - LEFT - LEFT
+                    break;
+                }
+                case 33: {
+                    spottedObject = checkCell(animal.getX() - 1 - 1 - 1, animal.getY()); // LEFT - LEFT - LEFT
+                    break;
+                }
+                case 34: {
+                    spottedObject = checkCell(animal.getX() - 1 - 1 - 1, animal.getY() - 1); // UP - LEFT - LEFT - LEFT
+                    break;
+                }
+                case 35: {
+                    spottedObject = checkCell(animal.getX() - 1 - 1, animal.getY() - 1 - 1); // UP - UP - LEFT - LEFT
+                    break;
+                }
+                case 36: {
+                    spottedObject = checkCell(animal.getX() - 1, animal.getY() - 1 - 1 - 1); // UP - UP - UP - LEFT
                     break;
                 }
             }
@@ -397,17 +558,9 @@ public class DynamicAlgorithm implements Interface_DynamicAlgorithm {
             // True value is ignored because it means it found itself
             if (!(spottedObject instanceof Boolean)) {
 
-                // Stops searching if the cell checked is empty
-                if (spottedObject == null) {
-                    return 1;
-                } else {
-                    spottedSurroundings.add(spottedObject);
-                }
+                spottedSurroundings.add(spottedObject);
             }
         }
-
-        // If no empty cells were found
-        return 0;
     }
 
     /**
@@ -422,10 +575,13 @@ public class DynamicAlgorithm implements Interface_DynamicAlgorithm {
 
         ArrayList<Integer> randomOrder = new ArrayList<>();
 
-        while (randomOrder.size() < DIRECTIONS_CARDINAL + sight) {
+        // Direction an Object can look (1=UP | 2=UP-RIGHT | 3=RIGHT | 4=DOWN-RIGHT | 5=DOWN | 6=DOWN-LEFT | 7=LEFT | 8=UP-LEFT)
+        int directionsCardinal = 8;
+
+        while (randomOrder.size() < directionsCardinal * sight) {
 
             // .nextInt((max - min) + 1) + min = Range min -> max inclusive
-            int randomCell = random.nextInt(((DIRECTIONS_CARDINAL + sight) - 1) + 1) + 1;
+            int randomCell = random.nextInt(((directionsCardinal + sight) - 1) + 1) + 1;
 
 
             // Checks if that number has been generated
@@ -442,6 +598,8 @@ public class DynamicAlgorithm implements Interface_DynamicAlgorithm {
      * If the item is present inside the spottedSurroundings then it is ignored.
      * Else the coordinates are verified to be inside the map bounds
      *
+     * *** ONLY INDEX 0 is Spotted ***
+     *
      * If the coordinates are inside the map bounds and the item hasn't been checked the item is returned
      *  *** The item is not added to spottedSurroundings in this method ***
      *  certain coordinates will be stored class wide such as:
@@ -449,6 +607,14 @@ public class DynamicAlgorithm implements Interface_DynamicAlgorithm {
      *                  IF item is a prey (Bunny) the coordinates will be saved x_Prey | y_Prey
      *
      *  Else coordinates are not inside map bounds a recursive call to this method will be sent with bounded coordinates
+     *
+     *  Variables changed:
+     *      x_Empty
+     *      y_Empty
+     *      x_Prey
+     *      y_Prey
+     *      x_Mate
+     *      y_Mate
      *
      * @param x x-Coordinate of the item that will be checked
      * @param y y-Coordinate of the item that will be checked
@@ -482,11 +648,11 @@ public class DynamicAlgorithm implements Interface_DynamicAlgorithm {
                     if (y < MAP_HEIGHT) {
 
                         // *** Check Action Begins Here ***
-                        if (MAP[x][y] == null){
+                        if (MAP[x][y].size() == 0){
                             x_Empty = x;
                             y_Empty = y;
                         }
-                        else if (MAP[x][y] instanceof Bunny){
+                        else if (MAP[x][y].get(0) instanceof Bunny){
 
                             // Used by Predators
                             x_Prey = x;
@@ -496,14 +662,19 @@ public class DynamicAlgorithm implements Interface_DynamicAlgorithm {
                             x_Mate = x;
                             y_Mate = y;
                         }
-                        else if (MAP[x][y] instanceof Fox){
+                        else if (MAP[x][y].get(0) instanceof Fox){
 
                             // Used by Male Foxes
                             x_Mate = x;
                             y_Mate = y;
                         }
 
-                        return MAP[x][y];
+                        // return a null if the list there is empty
+                        if (MAP[x][y].isEmpty()){
+                            return null;
+                        } else {
+                            return MAP[x][y].get(0);
+                        }
 
                     } else {
                         return checkCell(x, MAP_HEIGHT-1);
@@ -555,7 +726,7 @@ public class DynamicAlgorithm implements Interface_DynamicAlgorithm {
         // Checks which species of plant it is
         if (plant instanceof Grass){
             Grass seedling = new Grass(x_Empty,y_Empty,0);
-            MAP[seedling.getX()][seedling.getY()] = seedling;
+            MAP[seedling.getX()][seedling.getY()].add(seedling);
             babyGrass.add(seedling);
         }
     }
@@ -568,6 +739,8 @@ public class DynamicAlgorithm implements Interface_DynamicAlgorithm {
      * Plant aging which calculates a death chance based on the plant's age.
      * The closer it gets to it's MAX AGE the higher the death chance
      *
+     * TODO implement Life Stages (seed | sapling | plant)
+     *
      * @param plant the plant to be aged by 1
      */
     private void age(Plant plant){
@@ -578,31 +751,69 @@ public class DynamicAlgorithm implements Interface_DynamicAlgorithm {
         double chanceDeath = plant.getAge() / plant.getMaxAge(); // How close the plant is to MAX age
 
         // The different cases for the chances that the animal dies the closer it gets to it's MAX age
-        if (chanceDeath >= 0.9){
-            chanceDeath = chanceDeath * ThreadLocalRandom.current().nextInt(90, 100);
+        if (chanceDeath >= 1){
+            chanceDeath = chanceDeath * ThreadLocalRandom.current().nextInt(98, 100); // 1/2 chance it dies
         }
-        else if (chanceDeath >= 0.8){
-            chanceDeath = chanceDeath * ThreadLocalRandom.current().nextInt(80, 100);
+        else if (1 < chanceDeath && chanceDeath >= 0.9){
+            chanceDeath = chanceDeath * ThreadLocalRandom.current().nextInt(95, 100); // 1/5 chance it dies
         }
-        else if (chanceDeath >= 0.7){
-            chanceDeath = chanceDeath * ThreadLocalRandom.current().nextInt(60, 100);
+        else if (0.9 < chanceDeath && chanceDeath >= 0.8){
+            chanceDeath = chanceDeath * ThreadLocalRandom.current().nextInt(90, 100); // 1/10 chance it dies
         }
-        else if (chanceDeath >= 0.6){
-            chanceDeath = chanceDeath * ThreadLocalRandom.current().nextInt(70, 100);
+        else if (0.8 < chanceDeath && chanceDeath >= 0.7){
+            chanceDeath = chanceDeath * ThreadLocalRandom.current().nextInt(80, 100); // 1/20 chance it dies
         }
-        else if (chanceDeath >= 0.5){
-            chanceDeath = chanceDeath * ThreadLocalRandom.current().nextInt(50, 100);
+        else if (0.7 < chanceDeath && chanceDeath >= 0.6){
+            chanceDeath = chanceDeath * ThreadLocalRandom.current().nextInt(70, 100); // 1/30 chance it dies
         }
-
-
-        // When chance of death is higher than 100% the plant dies
+        else if (0.6 < chanceDeath && chanceDeath >= 0.5){
+            chanceDeath = chanceDeath * ThreadLocalRandom.current().nextInt(50, 100); // 1/50 chance it dies
+        }
+            // When chance of death is higher than 100% the plant dies
         if (chanceDeath >= 100){
             deadPlants.add(plant);
         }
     }
 
+    /**
+     * Animal aging which claculates a deathc chance based on the animal's age
+     * The close it gets to it's MAX AGE the higher the death chance
+     *
+     * TODO implement Life Stages (baby | young adult | adult)
+     *
+     * @param animal animal which will be aged
+     */
     private void age(Animal animal) {
-        animal.setAge(animal.getAge()+1);
+        // Age one iteration
+        animal.setAge(animal.getAge() + 1);
+
+        double chanceDeath = animal.getAge() / animal.getMaxAge(); // How close the plant is to MAX age
+
+        // The different cases for the chances that the animal dies the closer it gets to it's MAX age
+        if (chanceDeath >= 1){
+            chanceDeath = chanceDeath * ThreadLocalRandom.current().nextInt(98, 100); // 1/2 chance it dies
+        }
+        else if (1 < chanceDeath && chanceDeath >= 0.9){
+            chanceDeath = chanceDeath * ThreadLocalRandom.current().nextInt(95, 100); // 1/5 chance it dies
+        }
+        else if (0.9 < chanceDeath && chanceDeath >= 0.8){
+            chanceDeath = chanceDeath * ThreadLocalRandom.current().nextInt(90, 100); // 1/10 chance it dies
+        }
+        else if (0.8 < chanceDeath && chanceDeath >= 0.7){
+            chanceDeath = chanceDeath * ThreadLocalRandom.current().nextInt(80, 100); // 1/20 chance it dies
+        }
+        else if (0.7 < chanceDeath && chanceDeath >= 0.6){
+            chanceDeath = chanceDeath * ThreadLocalRandom.current().nextInt(70, 100); // 1/30 chance it dies
+        }
+        else if (0.6 < chanceDeath && chanceDeath >= 0.5){
+            chanceDeath = chanceDeath * ThreadLocalRandom.current().nextInt(50, 100); // 1/50 chance it dies
+        }
+
+
+        // When chance of death is higher than 100% the plant dies
+        if (chanceDeath >= 100){
+            deadAnimals.add(animal);
+        }
     }
 
     /**
@@ -615,18 +826,26 @@ public class DynamicAlgorithm implements Interface_DynamicAlgorithm {
         // Updates all the dead plants
         for (Plant plant: deadPlants){
 
-            // If the plant is still on the map get rid of it
-            if (MAP[plant.getX()][plant.getY()] == plant){
-                MAP[plant.getX()][plant.getY()] = null;
+            // Goes through all the objects at that cell
+            for (int index = 0; index < MAP[plant.getX()][plant.getY()].size(); index++){
+
+                // If the animal is still on the map get rid of it
+                if (MAP[plant.getX()][plant.getY()].get(index) == plant){
+                    MAP[plant.getX()][plant.getY()].remove(plant);
+                }
             }
         }
 
         // Updates all the dead animals
         for (Animal animal: deadAnimals){
 
-            // If the plant is still on the map get rid of it
-            if (MAP[animal.getX()][animal.getY()] == animal){
-                MAP[animal.getX()][animal.getY()] = null;
+            // Goes through all the objects at that cell
+            for (int index = 0; index < MAP[animal.getX()][animal.getY()].size(); index++){
+
+                // If the animal is still on the map get rid of it
+                if (MAP[animal.getX()][animal.getY()].get(index) == animal){
+                    MAP[animal.getX()][animal.getY()].remove(animal);
+                }
             }
         }
 
@@ -646,18 +865,20 @@ public class DynamicAlgorithm implements Interface_DynamicAlgorithm {
                     System.out.print("| ");
                 }
 
-                if (MAP[column][row] instanceof Plant){
-                    System.out.print("Grass" + " | ");
+                // If the ArrayList at that column is empty print a NULL
+                // TODO print ALL entities in a list
+                if (MAP[column][row].isEmpty()){
+                    System.out.print("  ~  ");
+                } else if (MAP[column][row].get(0) instanceof Plant){
+                    System.out.print("Grass");
+                } else if (MAP[column][row].get(0) instanceof Bunny){
+                    System.out.print("Bunny");
                 }
-                else if (MAP[column][row] instanceof Bunny){
-                    System.out.print("Bunny" + " | ");
+                else if (MAP[column][row].get(0) instanceof Fox){
+                    System.out.print(" Fox ");
                 }
-                else if (MAP[column][row] instanceof Fox){
-                    System.out.print("Fox" + " | ");
-                }
-                else {
-                    System.out.print(MAP[column][row] + " | ");
-                }
+
+                System.out.print(" | ");
             }
         }
         System.out.println();
@@ -668,8 +889,6 @@ public class DynamicAlgorithm implements Interface_DynamicAlgorithm {
     /**
      *  *** TEST purposes ONLY ***
      *  Acts as a template for how the DynamicAlgorithm class should work in other classes
-     *
-     * TODO
      */
     public static void main(String[] args) {
         // Initialize the SimVariables
@@ -680,17 +899,25 @@ public class DynamicAlgorithm implements Interface_DynamicAlgorithm {
 
         // Initialize the DynamicAlgorithm Simulation
         // TODO input MAP_LENGTH and MAP_HEIGHT from the user
-        DynamicAlgorithm simulation = new DynamicAlgorithm(5, 5,
+        DynamicAlgorithm simulation = new DynamicAlgorithm(2, 2,
                                                             simVariables.grass,
                                                             simVariables.bunnies,
                                                             simVariables.foxes);
 
         int TOTAL_ITERATIONS = 10;
 
+        simulation.printMAP();
+
+        // Results after the iterations
+        System.out.println("Grass Population: " + simVariables.grass);
+        System.out.println("Bunny Population: " + simVariables.bunnies);
+        System.out.println("Fox Population:   " + simVariables.foxes);
+
         for (int i = 0; i < TOTAL_ITERATIONS; i++){
 
-            simulation.printMAP();
             simulation.calculate(simVariables);
+
+            simulation.printMAP();
 
             // Results after the iterations
             System.out.println("Grass Population: " + simVariables.grass);

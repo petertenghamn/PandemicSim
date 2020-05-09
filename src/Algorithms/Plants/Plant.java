@@ -26,7 +26,7 @@ public abstract class Plant {
     // *** Generated in Constructor of SubClass ***
     private String species; // Name of the species
     private double maxAge; // Maximum age of the species
-    private int sight; // How many grid spaces the animal can spot other entities
+    private int sight; // How many grid spaces the Plant can spot other entities hardcoded MAX of 1 see DynamicAlgorithm
 
     public int getX() {
         return x;
