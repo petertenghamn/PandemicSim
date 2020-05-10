@@ -1,34 +1,143 @@
 package Database;
 
+import Data.GraphedData;
+import Data.SimVariables;
+
+import java.sql.*;
+import java.util.ArrayList;
+
 public class Database implements Interface_Database {
 
-    @Override
-    public void downloadResultIDs() {
-        //open a connection to db
-        //connect();
+    private Connection con;
 
+    //move to test class when completed
+    public static void main(String[] args) {
+        //connect to the database
+        Database db = new Database();
+        db.connect();
 
+        //generate random data to use
+        GraphedData data = new GraphedData();
+        ArrayList<SimVariables> variables = new ArrayList<>();
+        for (int i = 0; i < 100; i++){
+            variables.add(new SimVariables(0,0,0));
+        }
+        data.setVariables(variables);
 
-        //close the connection with the db
+        //call DB methods
+        System.out.println("Uploading to the database");
+        db.uploadToDB(data);
+        System.out.println("downloading IDs from the database");
+        ArrayList<Integer> ids = db.downloadResultIDs();
+        System.out.println("downloading data from the database");
+        data = db.downloadResult();
+
+        //disconnect from the database
+        db.disconnect();
+    }
+
+    private void connect(){
+        try {
+            Class.forName("com.mysql.jdbc.Driver");
+            //here ecosimdb is database name, root is username and password
+            con = DriverManager.getConnection(
+                    "jdbc:mysql://localhost:3306/ecosimdb?autoReconnect=true&useSSL=false", "root", "root");
+        }
+        catch (Exception e){
+            System.out.println("Error:" + e);
+        }
+    }
+
+    private void disconnect(){
+        try {
+            con.close();
+        }
+        catch (Exception e){
+            System.out.println("Error: " + e);
+        }
     }
 
     @Override
-    public void downloadResult() {
-        //open a connection to db
-        //connect();
-
-
-
-        //close the connection with the db
+    public ArrayList<Integer> downloadResultIDs() {
+        ArrayList<Integer> result = new ArrayList<>();
+        try {
+            System.out.println("--- Execute Download Result ID Query ---");
+            Statement stmt = con.createStatement();
+            ResultSet rs = stmt.executeQuery("select * from records");
+            boolean first = true;
+            while(rs.next()) {
+                Integer rID = rs.getInt(1);
+                result.add(rID);
+                if (first) {
+                    System.out.println("Found IDs");
+                    System.out.print(rID);
+                    first = false;
+                } else {
+                    System.out.print(" : " + rID);
+                }
+            }
+            System.out.println("");
+            return result;
+        }
+        catch (Exception e) {
+            System.out.println("Error: " + e);
+            return null;
+        }
     }
 
     @Override
-    public void uploadToDB() {
-        //open a connection to db
-        //connect();
+    public GraphedData downloadResult() {
+        GraphedData result = new GraphedData();
+        ArrayList<SimVariables> variables = new ArrayList<>();
+        try {
+            System.out.println("--- Execute Download Result Query ---");
+            Statement stmt = con.createStatement();
+            ResultSet rs = stmt.executeQuery("select * from iteration where records_id = 1");
+            boolean first = true;
+            while (rs.next()) {
+                if (first) {
+                    System.out.println("Iteration data");
+                    System.out.print("[ID:" + rs.getInt(1) + "] " + rs.getInt(2) + ", " + rs.getInt(3) + ", " + rs.getInt(4));
+                    first = false;
+                } else {
+                    System.out.print(" | " + "[ID:" + rs.getInt(1) + "] " + rs.getInt(2) + ", " + rs.getInt(3) + ", " + rs.getInt(4));
+                }
+                variables.add(new SimVariables(rs.getInt(2), rs.getInt(3), rs.getInt(4)));
+            }
+            System.out.println("");
+            result.setVariables(variables);
+            return result;
+        }
+        catch (Exception e) {
+            System.out.println("Error: " + e);
+            return null;
+        }
+    }
 
+    @Override
+    public void uploadToDB(GraphedData data) {
+        try {
+            //check if records with id = 1 exists, if it does, remove existing before placing new
+            ArrayList<Integer> currentIDs = downloadResultIDs();
+            if (currentIDs.contains(1)){
+                System.out.println("--- Delete Existing record at 1 in order to replace with new data ---");
+                Statement stmt = con.createStatement();
+                stmt.execute("delete from records where id = 1");
+            }
 
+            System.out.println("--- Insert record with id of 1 ---");
+            Statement stmt = con.createStatement();
+            stmt.execute("insert into records values (1, null)");
 
-        //close the connection with the db
+            System.out.println("--- Insert iteration data assigned to the inserted record ---");
+            for (SimVariables variable : data.getVariables()){
+                stmt = con.createStatement();
+                stmt.execute("insert into iteration (fox_pop, bunny_pop, grass_pop, records_id) " +
+                        "values (" + variable.foxes + ", " + variable.bunnies + ", " + variable.grass + ", (select id from records where id = 1))");
+            }
+        }
+        catch (Exception e) {
+            System.out.println("Error: " + e);
+        }
     }
 }

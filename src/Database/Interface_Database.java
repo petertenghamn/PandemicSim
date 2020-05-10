@@ -1,7 +1,10 @@
 package Database;
 
+import Data.GraphedData;
+import java.util.ArrayList;
+
 public interface Interface_Database {
-    public void downloadResultIDs();
-    public void downloadResult();
-    public void uploadToDB();
+    public ArrayList<Integer> downloadResultIDs();
+    public GraphedData downloadResult();
+    public void uploadToDB(GraphedData data);
 }
