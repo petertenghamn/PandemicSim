@@ -33,108 +33,6 @@ public class DynamicAlgorithm implements Interface_DynamicAlgorithm {
         initializeMap(init_Grass_Pop,init_Bunny_Pop, init_Fox_Pop);
     }
 
-    /**
-     * The main method (of 2) that communicates with outside of this class
-     * This method iterates through the simulation updating population values based on changing variables
-     *
-     *          MAP:
-     *                  simulation is ran on a grid which
-     *                  affects ALL the following dynamically depending on position
-     *                  Entities movements and search patterns are randomized
-     *
-     *          Grass:
-     *                  age
-     *                  sight
-     *                  reproduction
-     *                  dying of old age
-     *                  TODO IMPLEMENT Life Stages ( BABY | YOUNG ADULT | ADULT )
-     *
-     *          Bunny:
-     *                  age
-     *                  TODO sight
-     *                  TODO gender
-     *                  TODO reproduction
-     *                  dying of old age
-     *                  TODO food search
-     *                  TODO energy levels
-     *                  TODO hunger levels
-     *                  TODO predator evasion
-     *                  TODO IMPLEMENT Life Stages ( BABY | YOUNG ADULT | ADULT )
-     *
-     *          Fox:
-     *                  age
-     *                  TODO sight
-     *                  TODO gender
-     *                  TODO reproduction
-     *                  dying of old age
-     *                  TODO food search
-     *                  TODO energy levels
-     *                  TODO hunger levels
-     *                  TODO IMPLEMENT Life Stages ( BABY | YOUNG ADULT | ADULT )
-     *
-     *
-     * @param input the simulationVariables before the iteration
-     * @return updated simulationVariables after the iteration
-     */
-    @Override
-    public SimVariables calculate(SimVariables input) {
-
-        // used to track empty cells for movement and plant reproduction
-        int emptyCount;
-
-        // Iterates through grass turns
-        for (Plant plant: grass){
-
-            age(plant);
-
-            // Plants reproduce if any cell around them is NULL
-            emptyCount = checkSurroundings(plant);
-            if (emptyCount > 0){
-                reproduce(plant);
-            }
-        }
-
-        // Iterates through the bunnies turns
-        for (Bunny bunny: bunnies){
-
-            age(bunny);
-
-            checkSurroundings(bunny);
-        }
-
-        // Iterates through the foxes turns
-        for (Fox fox: foxes){
-
-        }
-
-        // *** Remove all dead things BEFORE updating the map ***
-
-        // Removes deadPlants from their respective ArrayLists
-        grass.removeAll(deadPlants);
-
-        // Removes deadAnimals from their respective ArrayLists
-        bunnies.removeAll(deadAnimals);
-        foxes.removeAll(deadAnimals);
-
-        updateMap();
-
-        // *** ADD all the babies AFTER updating the map ***
-
-        grass.addAll(babyGrass); // When babyGrass becomes adults add them to the grass list
-
-        // Clear every List
-        deadPlants.clear(); // Clear the List of deadPlants when all the plants have been removed from other Lists
-        deadAnimals.clear(); // Clear the list of deadAnimals when all the animals have been removed from other Lists
-        babyGrass.clear(); // Clear List of babyAnimals when all new entities have been added to other lists
-
-        // Updates the SimVariables
-        input.grass = grass.size();
-        input.bunnies = bunnies.size();
-        input.foxes = foxes.size();
-
-        return input;
-    }
-
     // Constants
     public final int MAP_LENGTH; // Number of Columns in grid
     public final int MAP_HEIGHT; // Number of Rows in grid
@@ -166,6 +64,615 @@ public class DynamicAlgorithm implements Interface_DynamicAlgorithm {
     // Widgets
     private Random random = new Random(); // Random Generator used in random placement in initialization
     private ArrayList<Object>[][] MAP; // The environment in which the simulation takes place
+
+    /* ---------------------------------------------------------------------------------------------------
+        *** The methods in this section should only be accessed by Plants ***
+       ---------------------------------------------------------------------------------------------------
+     */
+
+    /** *** Part of an Overloaded Method ***
+     * Plant aging which calculates a death chance based on the plant's age.
+     * The closer it gets to it's MAX AGE the higher the death chance
+     *
+     * TODO implement Life Stages (seed | sapling | plant)
+     *
+     * @param plant the plant to be aged by 1
+     */
+    private void age(Plant plant){
+
+        // Age one iteration
+        plant.setAge(plant.getAge() + 1);
+
+        double chanceDeath = plant.getAge() / plant.getMaxAge(); // How close the plant is to MAX age
+
+        // The different cases for the chances that the animal dies the closer it gets to it's MAX age
+        if (chanceDeath >= 1){
+            chanceDeath = chanceDeath * ThreadLocalRandom.current().nextInt(98, 100); // 1/2 chance it dies
+        }
+        else if (1 < chanceDeath && chanceDeath >= 0.9){
+            chanceDeath = chanceDeath * ThreadLocalRandom.current().nextInt(95, 100); // 1/5 chance it dies
+        }
+        else if (0.9 < chanceDeath && chanceDeath >= 0.8){
+            chanceDeath = chanceDeath * ThreadLocalRandom.current().nextInt(90, 100); // 1/10 chance it dies
+        }
+        else if (0.8 < chanceDeath && chanceDeath >= 0.7){
+            chanceDeath = chanceDeath * ThreadLocalRandom.current().nextInt(80, 100); // 1/20 chance it dies
+        }
+        else if (0.7 < chanceDeath && chanceDeath >= 0.6){
+            chanceDeath = chanceDeath * ThreadLocalRandom.current().nextInt(70, 100); // 1/30 chance it dies
+        }
+        else if (0.6 < chanceDeath && chanceDeath >= 0.5){
+            chanceDeath = chanceDeath * ThreadLocalRandom.current().nextInt(50, 100); // 1/50 chance it dies
+        }
+        // When chance of death is higher than 100% the plant dies
+        if (chanceDeath >= 100){
+            deadPlants.add(plant);
+        }
+    }
+
+    /** *** Part of an Overloaded Method ***
+     * Plants check their surroundings but stop looking as soon as they find an empty place.
+     * Plants search pattern is random and can also be affected by:
+     *      sight: MIN - 1 MAX - 1 (hardcoded)
+     *
+     *  methods used:
+     *      generateRandomOrder();
+     *      checkCell();
+     *
+     *  variables changed:
+     *      spottedSurroundings
+     *
+     * @param plant the plant that will look around it's coordinates
+     * @return The empty spots that the plant has found (1 | 0)
+     */
+    private int checkSurroundings(Plant plant){
+
+        ArrayList<Integer> checkingOrder = generateRandomOrder(plant.getSight()); // The order which cells will be checked
+        Object spottedObject;
+
+        // New object is searching so it hasn't spotted anything
+        spottedSurroundings.clear();
+
+        spottedSurroundings.add(plant);
+
+        // Goes through all the cells the Plant can see
+        for (int checking: checkingOrder){
+
+            spottedObject = checkCase(checking, plant.getX(), plant.getY());
+
+            // True value is ignored because it means it found itself
+            if (!(spottedObject instanceof Boolean)) {
+
+                // Stops searching if the cell checked is empty
+                if (spottedObject == null) {
+                    return 1;
+                } else {
+                    spottedSurroundings.add(spottedObject);
+                }
+            }
+        }
+
+        return 0;
+    }
+
+    /** *** Part of an Overloaded Method ***
+     * The reproduction method which updates the ArrayList babyGrass and places the seedling on the map
+     * Plants reproduce by finding any emptySpace
+     * TODO add more complexity to plant reproduction
+     *
+     * @param plant the plant which is reproducing
+     */
+    private void reproduce(Plant plant){
+
+        // Checks which species of plant it is
+        if (plant instanceof Grass){
+            Grass seedling = new Grass(x_Empty,y_Empty,0);
+            MAP[seedling.getX()][seedling.getY()].add(seedling);
+            babyGrass.add(seedling);
+        }
+    }
+
+    /* ---------------------------------------------------------------------------------------------------
+        *** The methods in this section should only be accessed by Animals ***
+       ---------------------------------------------------------------------------------------------------
+     */
+
+    /** *** Part of an Overloaded Method ***
+     * Animal aging which calculates a death chance based on the animal's age
+     * The close it gets to it's MAX AGE the higher the death chance
+     *
+     * TODO implement Life Stages (baby | young adult | adult)
+     *
+     * @param animal animal which will be aged
+     */
+    private void age(Animal animal) {
+        // Age one iteration
+        animal.setAge(animal.getAge() + 1);
+
+        double chanceDeath = animal.getAge() / animal.getMaxAge(); // How close the plant is to MAX age
+
+        // The different cases for the chances that the animal dies the closer it gets to it's MAX age
+        if (chanceDeath >= 1){
+            chanceDeath = chanceDeath * ThreadLocalRandom.current().nextInt(98, 100); // 1/2 chance it dies
+        }
+        else if (1 < chanceDeath && chanceDeath >= 0.9){
+            chanceDeath = chanceDeath * ThreadLocalRandom.current().nextInt(95, 100); // 1/5 chance it dies
+        }
+        else if (0.9 < chanceDeath && chanceDeath >= 0.8){
+            chanceDeath = chanceDeath * ThreadLocalRandom.current().nextInt(90, 100); // 1/10 chance it dies
+        }
+        else if (0.8 < chanceDeath && chanceDeath >= 0.7){
+            chanceDeath = chanceDeath * ThreadLocalRandom.current().nextInt(80, 100); // 1/20 chance it dies
+        }
+        else if (0.7 < chanceDeath && chanceDeath >= 0.6){
+            chanceDeath = chanceDeath * ThreadLocalRandom.current().nextInt(70, 100); // 1/30 chance it dies
+        }
+        else if (0.6 < chanceDeath && chanceDeath >= 0.5){
+            chanceDeath = chanceDeath * ThreadLocalRandom.current().nextInt(50, 100); // 1/50 chance it dies
+        }
+
+
+        // When chance of death is higher than 100% the plant dies
+        if (chanceDeath >= 100){
+            deadAnimals.add(animal);
+        }
+    }
+
+    /** *** Part of an Overloaded Method ***
+     * Checks the surrounding cells of the animals based on:
+     *      sight: MIN of 1 - MAX of 3 (hardcoded)
+     *      animal x & y coordinates
+     *
+     *  methods used:
+     *      generateRandomOrder();
+     *      checkCell();
+     *
+     *  variables changed:
+     *      spottedSurroundings
+     *
+     *
+     * @param animal the animal that will look around it's coordinates
+     */
+    private void checkSurroundings(Animal animal){
+
+        ArrayList<Integer> checkingOrder = generateRandomOrder(animal.getSight()); // The order which cells will be checked
+        Object spottedObject = animal;
+
+        // New object is searching so it hasn't spotted anything
+        spottedSurroundings.clear();
+
+        // Adds itself as a spotted object
+        spottedSurroundings.add(spottedObject);
+
+        // Goes through all the cells the Animal can see
+        for (int checking: checkingOrder) {
+
+            spottedObject = checkCase(checking, animal.getX(), animal.getY());
+
+            // True value is ignored because it means it found itself
+            if (!(spottedObject instanceof Boolean)) {
+                spottedSurroundings.add(spottedObject);
+            }
+        }
+    }
+
+    // TODO *** WORK IN PROGRESS ***
+    private void reproduce(Animal animal) {
+
+    }
+
+    // TODO *** WORK IN PROGRESS ***
+    private void calculateEnergy(Animal animal) {
+
+    }
+
+    // TODO *** WORK IN PROGRESS ***
+    private void calculateSexualNeed(Animal animal) {
+
+    }
+
+    // TODO *** WORK IN PROGRESS ***
+    private void calculateEvasion(Animal prey, Animal predator) {
+
+    }
+
+    // TODO *** WORK IN PROGRESS ***
+    private void calculateHunger(Animal animal) {
+
+    }
+
+    // TODO *** WORK IN PROGRESS ***
+    private void movement() {
+
+    }
+
+    // TODO *** WORK IN PROGRESS ***
+    private void rest() {
+
+    }
+
+    /* ---------------------------------------------------------------------------------------------------
+        *** The methods in this section should only be accessed by Prey ***
+       ---------------------------------------------------------------------------------------------------
+     */
+
+
+    /* ---------------------------------------------------------------------------------------------------
+        *** The methods in this section should only be accessed by Predators ***
+       ---------------------------------------------------------------------------------------------------
+     */
+
+    /* ---------------------------------------------------------------------------------------------------
+        *** The methods past this section are used as tools by the Class ***
+       ---------------------------------------------------------------------------------------------------
+     */
+
+    /**
+     * A tool which randomly generates an order in which the cells will be checked
+     * The total amount of cells the entity can check depends on the sight of the entity using the formula:
+     *              Possible cells = 2(sight^2 + 3sight)
+     *
+     * order of cells is checked for duplicates before returning the list
+     *
+     * @param sight the sight of the entity MIN is 0 which is adjacent squares
+     * @return the ArrayList of the order cells will be checked
+     */
+    private ArrayList<Integer> generateRandomOrder(int sight){
+
+        ArrayList<Integer> randomOrder = new ArrayList<>();
+
+        // Mat.pow(base, power) = base^power return type is double
+        int totalCells = 2 * ((((int) Math.pow(sight, 2)) + 3) * sight);
+
+        while (randomOrder.size() < totalCells) {
+
+            // .nextInt((max - min) + 1) + min = Range min -> max inclusive
+            int randomCell = random.nextInt(((totalCells - 1) + 1)) + 1;
+
+            // Checks if that number has been generated
+            if (!randomOrder.contains(randomCell)) {
+                randomOrder.add(randomCell);
+            }
+        }
+
+        return randomOrder;
+    }
+
+    /**
+     * Verifies that the cell the entity wants to check has a coded case
+     * then calls the checkCell method to check the coordinate
+     *
+     * @param checkCell the clockwise cell number
+     * @param x the origin x coordinate
+     * @param y the origin y coordinate
+     * @return the found object * can be null *
+     */
+    private Object checkCase(int checkCell, int x, int y){
+
+        Object spotted = null;
+
+        // The possible cells that the entity can check
+        switch (checkCell){
+            case 1: {
+                spotted = checkCell(x, y - 1); // UP
+                break;
+            }
+            case 2: {
+                spotted = checkCell(x + 1, y - 1); // UP - RIGHT
+                break;
+            }
+            case 3: {
+                spotted = checkCell(x + 1, y); // RIGHT
+                break;
+            }
+            case 4: {
+                spotted = checkCell(x + 1, y + 1); // DOWN - RIGHT
+                break;
+            }
+            case 5: {
+                spotted = checkCell(x, y + 1); // DOWN
+                break;
+            }
+            case 6: {
+                spotted = checkCell(x - 1, y + 1); // DOWN - LEFT
+                break;
+            }
+            case 7: {
+                spotted = checkCell(x - 1, y); // LEFT
+                break;
+            }
+            case 8: {
+                spotted = checkCell(x - 1, y - 1); // UP - LEFT
+                break;
+            }
+            case 9: {
+                spotted = checkCell(x, y - 1 - 1); // UP - UP
+                break;
+            }
+            case 10: {
+                spotted = checkCell(x + 1, y - 1 - 1); // UP - UP - RIGHT
+                break;
+            }
+            case 11: {
+                spotted = checkCell(x + 1 + 1, y - 1); // UP - RIGHT - RIGHT
+                break;
+            }
+            case 12: {
+                spotted = checkCell(x + 1 + 1, y); // RIGHT - RIGHT
+                break;
+            }
+            case 13: {
+                spotted = checkCell(x + 1 + 1, y + 1); // DOWN - RIGHT - RIGHT
+                break;
+            }
+            case 14: {
+                spotted = checkCell(x + 1, y + 1 + 1); // DOWN - DOWN - RIGHT
+                break;
+            }
+            case 15: {
+                spotted = checkCell(x, y + 1 + 1); // DOWN - DOWN
+                break;
+            }
+            case 16: {
+                spotted = checkCell(x - 1, y + 1 + 1); // DOWN - DOWN - LEFT
+                break;
+            }
+            case 17: {
+                spotted = checkCell(x - 1 - 1, y + 1); // DOWN - LEFT - LEFT
+                break;
+            }
+            case 18: {
+                spotted = checkCell(x - 1 - 1, y); // LEFT - LEFT
+                break;
+            }
+            case 19: {
+                spotted = checkCell(x - 1 - 1, y - 1); // UP - LEFT - LEFT
+                break;
+            }
+            case 20: {
+                spotted = checkCell(x - 1, y - 1 - 1); // UP - UP -LEFT
+                break;
+            }
+            case 21: {
+                spotted = checkCell(x, y - 1 - 1 - 1); // UP - UP - UP
+                break;
+            }
+            case 22: {
+                spotted = checkCell(x + 1, y - 1 - 1 - 1); // UP - UP - UP - RIGHT
+                break;
+            }
+            case 23: {
+                spotted = checkCell(x + 1 + 1, y - 1 - 1); // UP - UP - RIGHT - RIGHT
+                break;
+            }
+            case 24: {
+                spotted = checkCell(x + 1 + 1 + 1, y - 1); // UP - RIGHT - RIGHT - RIGHT
+                break;
+            }
+            case 25: {
+                spotted = checkCell(x + 1 + 1 + 1, y); // RIGHT - RIGHT - RIGHT
+                break;
+            }
+            case 26: {
+                spotted = checkCell(x + 1 + 1 + 1, y + 1); // DOWN - RIGHT - RIGHT - RIGHT
+                break;
+            }
+            case 27: {
+                spotted = checkCell(x + 1 + 1, y + 1 + 1); // DOWN - DOWN - RIGHT - RIGHT
+                break;
+            }
+            case 28: {
+                spotted = checkCell(x + 1, y + 1 + 1 + 1); // DOWN - DOWN - DOWN - RIGHT
+                break;
+            }
+            case 29: {
+                spotted = checkCell(x, y + 1 + 1 + 1); // DOWN - DOWN- DOWN
+                break;
+            }
+            case 30: {
+                spotted = checkCell(x - 1, y + 1 + 1 + 1); // DOWN - DOWN- DOWN - LEFT
+                break;
+            }
+            case 31: {
+                spotted = checkCell(x - 1 - 1, y + 1 + 1); // DOWN - DOWN - LEFT - LEFT
+                break;
+            }
+            case 32: {
+                spotted = checkCell(x - 1 - 1 - 1, y + 1); // DOWN - LEFT - LEFT - LEFT
+                break;
+            }
+            case 33: {
+                spotted = checkCell(x - 1 - 1 - 1, y); // LEFT - LEFT - LEFT
+                break;
+            }
+            case 34: {
+                spotted = checkCell(x - 1 - 1 - 1, y - 1); // UP - LEFT - LEFT - LEFT
+                break;
+            }
+            case 35: {
+                spotted = checkCell(x - 1 - 1, y - 1 - 1); // UP - UP - LEFT - LEFT
+                break;
+            }
+            case 36: {
+                spotted = checkCell(x - 1, y - 1 - 1 - 1); // UP - UP - UP - LEFT
+                break;
+            }
+        }
+
+
+        return spotted;
+    }
+
+    /**
+     * Checks the cell at the parameter coordinates.
+     * If the item is present inside the spottedSurroundings then it is ignored.
+     * Else the coordinates are verified to be inside the map bounds
+     *
+     * *** ONLY INDEX 0 is Spotted ***
+     *
+     * If the coordinates are inside the map bounds and the item hasn't been checked the item is returned
+     *  *** The item is not added to spottedSurroundings in this method ***
+     *  certain coordinates will be stored class wide such as:
+     *                  If there is no item (NULL) the coordinates will be saved x_Empty | y_Empty
+     *                  IF item is a prey (Bunny) the coordinates will be saved x_Prey | y_Prey
+     *
+     *  Else coordinates are not inside map bounds a recursive call to this method will be sent with bounded coordinates
+     *
+     *  Variables changed:
+     *      x_Empty
+     *      y_Empty
+     *      x_Prey
+     *      y_Prey
+     *      x_Mate
+     *      y_Mate
+     *
+     * @param x x-Coordinate of the item that will be checked
+     * @param y y-Coordinate of the item that will be checked
+     * @return true if item has been checked else return spotted Object
+     */
+    private Object checkCell(int x, int y){
+
+        // Check if this coordinate has been checked already
+        for (Object entity: spottedSurroundings){
+            if (entity instanceof Plant){
+                Plant plant = (Plant) entity;
+                if (plant.getX() == x && plant.getY() == y){
+                    // true value is ignored
+                    return true;
+                }
+
+            } else if (entity instanceof Animal){
+                Animal animal = (Animal) entity;
+                if (animal.getX() == x && animal.getY() == y){
+                    // true value is ignored
+                    return true;
+                }
+
+            }
+        }
+
+        // Bind the search to within the bounds of the map
+        if (x >= 0) {
+            if (x < MAP_LENGTH) {
+                if (y >= 0) {
+                    if (y < MAP_HEIGHT) {
+
+                        // *** Check Action Begins Here ***
+                        if (MAP[x][y].size() == 0){
+                            x_Empty = x;
+                            y_Empty = y;
+                        }
+                        else if (MAP[x][y].get(0) instanceof Bunny){
+
+                            // Used by Predators
+                            x_Prey = x;
+                            y_Prey = y;
+
+                            // Used by Male Bunnies
+                            x_Mate = x;
+                            y_Mate = y;
+                        }
+                        else if (MAP[x][y].get(0) instanceof Fox){
+
+                            // Used by Predators
+                            x_Prey = x;
+                            y_Prey = y;
+
+                            // Used by Male Foxes
+                            x_Mate = x;
+                            y_Mate = y;
+                        }
+
+                        // return a null if the list there is empty
+                        if (MAP[x][y].isEmpty()){
+                            return null;
+                        } else {
+                            return MAP[x][y].get(0);
+                        }
+
+                    } else {
+                        return checkCell(x, MAP_HEIGHT-1);
+                    }
+                } else {
+                    return checkCell(x, 0);
+                }
+            } else {
+                return checkCell(MAP_LENGTH-1, y);
+            }
+        } else {
+            return checkCell(0, y);
+        }
+    }
+
+    /**
+     * Updates the map with the *** dead *** this is done so that dead are not counted during the iteration
+     * and will be shown on the graph after the iteration as null
+     *
+     */
+    private void updateMap(){
+
+        // Updates all the dead plants
+        for (Plant plant: deadPlants){
+
+            // Goes through all the objects at that cell
+            for (int index = 0; index < MAP[plant.getX()][plant.getY()].size(); index++){
+
+                // If the animal is still on the map get rid of it
+                if (MAP[plant.getX()][plant.getY()].get(index) == plant){
+                    MAP[plant.getX()][plant.getY()].remove(plant);
+                }
+            }
+        }
+
+        // Updates all the dead animals
+        for (Animal animal: deadAnimals){
+
+            // Goes through all the objects at that cell
+            for (int index = 0; index < MAP[animal.getX()][animal.getY()].size(); index++){
+
+                // If the animal is still on the map get rid of it
+                if (MAP[animal.getX()][animal.getY()].get(index) == animal){
+                    MAP[animal.getX()][animal.getY()].remove(animal);
+                }
+            }
+        }
+
+    }
+
+    /** *** TEMPORARY SOLUTION ***
+     * TODO print this to the user instead of the console
+     */
+    public void printMAP(){
+
+        // Printing the map
+        System.out.println("-------------------------------------------------");
+        for (int row = 0; row < MAP_HEIGHT; row++) {
+            System.out.println();
+            for (int column = 0; column < MAP_LENGTH; column++) {
+                if (column == 0) {
+                    System.out.print("| ");
+                }
+
+                // If the ArrayList at that column is empty print a NULL
+                // TODO print ALL entities in a list
+                if (MAP[column][row].isEmpty()){
+                    System.out.print("  ~  ");
+                } else if (MAP[column][row].get(0) instanceof Plant){
+                    System.out.print("Grass");
+                } else if (MAP[column][row].get(0) instanceof Bunny){
+                    System.out.print("Bunny");
+                }
+                else if (MAP[column][row].get(0) instanceof Fox){
+                    System.out.print(" Fox ");
+                }
+
+                System.out.print(" | ");
+            }
+        }
+        System.out.println();
+        System.out.println();
+        System.out.println("-------------------------------------------------");
+    }
 
     /* ---------------------------------------------------------------------------------------------------
         *** The methods in this section should only be called by the constructor of the class ***
@@ -278,612 +785,112 @@ public class DynamicAlgorithm implements Interface_DynamicAlgorithm {
 
     }
 
-    /* ---------------------------------------------------------------------------------------------------
-        *** The methods in this section should only be accessed by Plants ***
-       ---------------------------------------------------------------------------------------------------
-     */
-
-    /* ---------------------------------------------------------------------------------------------------
-        *** The methods in this section should only be accessed by Prey ***
-       ---------------------------------------------------------------------------------------------------
-     */
-
-
-    /* ---------------------------------------------------------------------------------------------------
-        *** The methods in this section should only be accessed by Predators ***
-       ---------------------------------------------------------------------------------------------------
-     */
-
-    /* ---------------------------------------------------------------------------------------------------
-        *** The methods past this section can be used by more than one entity (Predator / Prey / Plant) ***
-       ---------------------------------------------------------------------------------------------------
-     */
-
     /**
-     * Plants check their surroundings but stop looking as soon as they find an empty place.
-     * Plants search pattern is random and can also be affected by:
-     *      sight: MIN - 1 MAX - 1 (hardcoded)
+     * The main method (of 2) that communicates with outside of this class
+     * This method iterates through the simulation updating population values based on changing variables
      *
-     *  methods used:
-     *      generateRandomOrder();
-     *      checkCell();
+     *          MAP:
+     *                  simulation is ran on a grid which
+     *                  affects ALL the following dynamically depending on position
+     *                  Entities movements and search patterns are randomized
      *
-     *  variables changed:
-     *      spottedSurroundings
+     *          Grass:
+     *                  age
+     *                  sight
+     *                  reproduction
+     *                  dying of old age
+     *                  TODO IMPLEMENT Life Stages ( BABY | YOUNG ADULT | ADULT )
      *
-     * @param plant the plant that will look around it's coordinates
-     * @return The empty spots that the plant has found (1 | 0)
+     *          Bunny:
+     *                  age
+     *                  sight
+     *                  TODO gender
+     *                  TODO reproduction
+     *                  dying of old age
+     *                  TODO food search
+     *                  TODO mate search
+     *                  TODO energy levels
+     *                  TODO hunger levels
+     *                  TODO predator evasion
+     *                  TODO IMPLEMENT Life Stages ( BABY | YOUNG ADULT | ADULT )
+     *
+     *          Fox:
+     *                  age
+     *                  sight
+     *                  TODO gender
+     *                  TODO reproduction
+     TODO food search
+     *                  TODO mate search
+     *                  dying of old age
+     *                  TODO energy levels
+     *                  TODO hunger levels
+     *                  TODO IMPLEMENT Life Stages ( BABY | YOUNG ADULT | ADULT )
+     *
+     *
+     * @param input the simulationVariables before the iteration
+     * @return updated simulationVariables after the iteration
      */
-    private int checkSurroundings(Plant plant){
+    @Override
+    public SimVariables calculate(SimVariables input) {
 
-        ArrayList<Integer> checkingOrder = generateRandomOrder(plant.getSight()); // The order which cells will be checked
-        Object spottedObject = plant;
+        // used to track empty cells for movement and plant reproduction
+        int emptyCount;
 
-        // New object is searching so it hasn't spotted anything
-        spottedSurroundings.clear();
+        // Iterates through grass turns
+        for (Plant plant: grass){
 
-        spottedSurroundings.add(plant);
+            age(plant);
 
-        // Goes through all the cells the Plant can see
-        for (int checking: checkingOrder){
-
-            // The possible cells that the Plant can check
-            switch (checking){
-                case 1:{
-                    spottedObject = checkCell(plant.getX(), plant.getY()-1); // UP
-                    break;
-                }
-                case 2:{
-                    spottedObject = checkCell(plant.getX()+1, plant.getY()-1); // UP - RIGHT
-                    break;
-                }
-                case 3:{
-                    spottedObject = checkCell(plant.getX()+1, plant.getY()); // RIGHT
-                    break;
-                }
-                case 4:{
-                    spottedObject = checkCell(plant.getX()+1, plant.getY()+1); // DOWN - RIGHT
-                    break;
-                }
-                case 5:{
-                    spottedObject = checkCell(plant.getX(), plant.getY()+1); // DOWN
-                    break;
-                }
-                case 6:{
-                    spottedObject = checkCell(plant.getX()-1, plant.getY()+1); // DOWN - LEFT
-                    break;
-                }
-                case 7:{
-                    spottedObject = checkCell(plant.getX()-1, plant.getY()); // LEFT
-                    break;
-                }
-                case 8:{
-                    spottedObject = checkCell(plant.getX()-1, plant.getY()-1); // UP - LEFT
-                    break;
-                }
-            }
-
-            // True value is ignored because it means it found itself
-            if (!(spottedObject instanceof Boolean)) {
-
-                // Stops searching if the cell checked is empty
-                if (spottedObject == null) {
-                    return 1;
-                } else {
-                    spottedSurroundings.add(spottedObject);
-                }
+            // Plants reproduce if any cell around them is NULL
+            emptyCount = checkSurroundings(plant);
+            if (emptyCount > 0){
+                reproduce(plant);
             }
         }
 
-        return 0;
-    }
+        // Iterates through the bunnies turns
+        for (Bunny bunny: bunnies){
 
-    /**
-     * Checks the surrounding cells of the animals based on:
-     *      sight: MIN of 1 - MAX of 3 (hardcoded)
-     *      animal x & y coordinates
-     *
-     *  methods used:
-     *      generateRandomOrder();
-     *      checkCell();
-     *
-     *  variables changed:
-     *      spottedSurroundings
-     *
-     *
-     * @param animal the animal that will look around it's coordinates
-     */
-    private void checkSurroundings(Animal animal){
+            age(bunny);
 
-        ArrayList<Integer> checkingOrder = generateRandomOrder(animal.getSight()); // The order which cells will be checked
-        Object spottedObject = animal;
-
-        // New object is searching so it hasn't spotted anything
-        spottedSurroundings.clear();
-
-        // Adds itself as a spotted object
-        spottedSurroundings.add(spottedObject);
-
-        // Goes through all the cells the Animal can see
-        for (int checking: checkingOrder) {
-
-            // The possible cells that the Animal can check
-            switch (checking) {
-                case 1: {
-                    spottedObject = checkCell(animal.getX(), animal.getY() - 1); // UP
-                    break;
-                }
-                case 2: {
-                    spottedObject = checkCell(animal.getX() + 1, animal.getY() - 1); // UP - RIGHT
-                    break;
-                }
-                case 3: {
-                    spottedObject = checkCell(animal.getX() + 1, animal.getY()); // RIGHT
-                    break;
-                }
-                case 4: {
-                    spottedObject = checkCell(animal.getX() + 1, animal.getY() + 1); // DOWN - RIGHT
-                    break;
-                }
-                case 5: {
-                    spottedObject = checkCell(animal.getX(), animal.getY() + 1); // DOWN
-                    break;
-                }
-                case 6: {
-                    spottedObject = checkCell(animal.getX() - 1, animal.getY() + 1); // DOWN - LEFT
-                    break;
-                }
-                case 7: {
-                    spottedObject = checkCell(animal.getX() - 1, animal.getY()); // LEFT
-                    break;
-                }
-                case 8: {
-                    spottedObject = checkCell(animal.getX() - 1, animal.getY() - 1); // UP - LEFT
-                    break;
-                }
-                case 9: {
-                    spottedObject = checkCell(animal.getX(), animal.getY() - 1 - 1); // UP - UP
-                    break;
-                }
-                case 10: {
-                    spottedObject = checkCell(animal.getX() + 1, animal.getY() - 1 - 1); // UP - UP - RIGHT
-                    break;
-                }
-                case 11: {
-                    spottedObject = checkCell(animal.getX() + 1 + 1, animal.getY() - 1); // UP - RIGHT - RIGHT
-                    break;
-                }
-                case 12: {
-                    spottedObject = checkCell(animal.getX() + 1 + 1, animal.getY()); // RIGHT - RIGHT
-                    break;
-                }
-                case 13: {
-                    spottedObject = checkCell(animal.getX() + 1 + 1, animal.getY() + 1); // DOWN - RIGHT - RIGHT
-                    break;
-                }
-                case 14: {
-                    spottedObject = checkCell(animal.getX() + 1, animal.getY() + 1 + 1); // DOWN - DOWN - RIGHT
-                    break;
-                }
-                case 15: {
-                    spottedObject = checkCell(animal.getX(), animal.getY() + 1 + 1); // DOWN - DOWN
-                    break;
-                }
-                case 16: {
-                    spottedObject = checkCell(animal.getX() - 1, animal.getY() + 1 + 1); // DOWN - DOWN - LEFT
-                    break;
-                }
-                case 17: {
-                    spottedObject = checkCell(animal.getX() - 1 - 1, animal.getY() + 1); // DOWN - LEFT - LEFT
-                    break;
-                }
-                case 18: {
-                    spottedObject = checkCell(animal.getX() - 1 - 1, animal.getY()); // LEFT - LEFT
-                    break;
-                }
-                case 19: {
-                    spottedObject = checkCell(animal.getX() - 1 - 1, animal.getY() - 1); // UP - LEFT - LEFT
-                    break;
-                }
-                case 20: {
-                    spottedObject = checkCell(animal.getX() - 1, animal.getY() - 1 - 1); // UP - UP -LEFT
-                    break;
-                }
-                case 21: {
-                    spottedObject = checkCell(animal.getX(), animal.getY() - 1 - 1 - 1); // UP - UP - UP
-                    break;
-                }
-                case 22: {
-                    spottedObject = checkCell(animal.getX() + 1, animal.getY() - 1 - 1 - 1); // UP - UP - UP - RIGHT
-                    break;
-                }
-                case 23: {
-                    spottedObject = checkCell(animal.getX() + 1 + 1, animal.getY() - 1 - 1); // UP - UP - RIGHT - RIGHT
-                    break;
-                }
-                case 24: {
-                    spottedObject = checkCell(animal.getX() + 1 + 1 + 1, animal.getY() - 1); // UP - RIGHT - RIGHT - RIGHT
-                    break;
-                }
-                case 25: {
-                    spottedObject = checkCell(animal.getX() + 1 + 1 + 1, animal.getY()); // RIGHT - RIGHT - RIGHT
-                    break;
-                }
-                case 26: {
-                    spottedObject = checkCell(animal.getX() + 1 + 1 + 1, animal.getY() + 1); // DOWN - RIGHT - RIGHT - RIGHT
-                    break;
-                }
-                case 27: {
-                    spottedObject = checkCell(animal.getX() + 1 + 1, animal.getY() + 1 + 1); // DOWN - DOWN - RIGHT - RIGHT
-                    break;
-                }
-                case 28: {
-                    spottedObject = checkCell(animal.getX() + 1, animal.getY() + 1 + 1 + 1); // DOWN - DOWN - DOWN - RIGHT
-                    break;
-                }
-                case 29: {
-                    spottedObject = checkCell(animal.getX(), animal.getY() + 1 + 1 + 1); // DOWN - DOWN- DOWN
-                    break;
-                }
-                case 30: {
-                    spottedObject = checkCell(animal.getX() - 1, animal.getY() + 1 + 1 + 1); // DOWN - DOWN- DOWN - LEFT
-                    break;
-                }
-                case 31: {
-                    spottedObject = checkCell(animal.getX() - 1 - 1, animal.getY() + 1 + 1); // DOWN - DOWN - LEFT - LEFT
-                    break;
-                }
-                case 32: {
-                    spottedObject = checkCell(animal.getX() - 1 - 1 - 1, animal.getY() + 1); // DOWN - LEFT - LEFT - LEFT
-                    break;
-                }
-                case 33: {
-                    spottedObject = checkCell(animal.getX() - 1 - 1 - 1, animal.getY()); // LEFT - LEFT - LEFT
-                    break;
-                }
-                case 34: {
-                    spottedObject = checkCell(animal.getX() - 1 - 1 - 1, animal.getY() - 1); // UP - LEFT - LEFT - LEFT
-                    break;
-                }
-                case 35: {
-                    spottedObject = checkCell(animal.getX() - 1 - 1, animal.getY() - 1 - 1); // UP - UP - LEFT - LEFT
-                    break;
-                }
-                case 36: {
-                    spottedObject = checkCell(animal.getX() - 1, animal.getY() - 1 - 1 - 1); // UP - UP - UP - LEFT
-                    break;
-                }
-            }
-
-            // True value is ignored because it means it found itself
-            if (!(spottedObject instanceof Boolean)) {
-
-                spottedSurroundings.add(spottedObject);
-            }
-        }
-    }
-
-    /**
-     * A tool which randomly generates an order in which the cells will be checked
-     * The amount of cells depends on the basic 8 DIRECTIONS_CARDINAL + sight of the Entity
-     * order of cells is checked for duplicates before returning the list
-     *
-     * @param sight the sight of the entity MIN is 0 which is adjacent squares
-     * @return the ArrayList of the order cells will be checked
-     */
-    private ArrayList<Integer> generateRandomOrder(int sight){
-
-        ArrayList<Integer> randomOrder = new ArrayList<>();
-
-        // Direction an Object can look (1=UP | 2=UP-RIGHT | 3=RIGHT | 4=DOWN-RIGHT | 5=DOWN | 6=DOWN-LEFT | 7=LEFT | 8=UP-LEFT)
-        int directionsCardinal = 8;
-
-        while (randomOrder.size() < directionsCardinal * sight) {
-
-            // .nextInt((max - min) + 1) + min = Range min -> max inclusive
-            int randomCell = random.nextInt(((directionsCardinal + sight) - 1) + 1) + 1;
+            checkSurroundings(bunny);
 
 
-            // Checks if that number has been generated
-            if (!randomOrder.contains(randomCell)) {
-                randomOrder.add(randomCell);
-            }
         }
 
-        return randomOrder;
-    }
+        // Iterates through the foxes turns
+        for (Fox fox: foxes){
+            age(fox);
 
-    /**
-     * Checks the cell at the parameter coordinates.
-     * If the item is present inside the spottedSurroundings then it is ignored.
-     * Else the coordinates are verified to be inside the map bounds
-     *
-     * *** ONLY INDEX 0 is Spotted ***
-     *
-     * If the coordinates are inside the map bounds and the item hasn't been checked the item is returned
-     *  *** The item is not added to spottedSurroundings in this method ***
-     *  certain coordinates will be stored class wide such as:
-     *                  If there is no item (NULL) the coordinates will be saved x_Empty | y_Empty
-     *                  IF item is a prey (Bunny) the coordinates will be saved x_Prey | y_Prey
-     *
-     *  Else coordinates are not inside map bounds a recursive call to this method will be sent with bounded coordinates
-     *
-     *  Variables changed:
-     *      x_Empty
-     *      y_Empty
-     *      x_Prey
-     *      y_Prey
-     *      x_Mate
-     *      y_Mate
-     *
-     * @param x x-Coordinate of the item that will be checked
-     * @param y y-Coordinate of the item that will be checked
-     * @return true if item has been checked else return spotted Object
-     */
-    private Object checkCell(int x, int y){
-
-        // Check if this coordinate has been checked already
-        for (Object entity: spottedSurroundings){
-            if (entity instanceof Plant){
-                Plant plant = (Plant) entity;
-                if (plant.getX() == x && plant.getY() == y){
-                    // true value is ignored
-                    return true;
-                }
-
-            } else if (entity instanceof Animal){
-                Animal animal = (Animal) entity;
-                if (animal.getX() == x && animal.getY() == y){
-                    // true value is ignored
-                    return true;
-                }
-
-            }
+            checkSurroundings(fox);
         }
 
-        // Bind the search to within the bounds of the map
-        if (x >= 0) {
-            if (x < MAP_LENGTH) {
-                if (y >= 0) {
-                    if (y < MAP_HEIGHT) {
+        // *** Remove all dead things BEFORE updating the map ***
 
-                        // *** Check Action Begins Here ***
-                        if (MAP[x][y].size() == 0){
-                            x_Empty = x;
-                            y_Empty = y;
-                        }
-                        else if (MAP[x][y].get(0) instanceof Bunny){
+        // Removes deadPlants from their respective ArrayLists
+        grass.removeAll(deadPlants);
 
-                            // Used by Predators
-                            x_Prey = x;
-                            y_Prey = y;
+        // Removes deadAnimals from their respective ArrayLists
+        bunnies.removeAll(deadAnimals);
+        foxes.removeAll(deadAnimals);
 
-                            // Used by Male Bunnies
-                            x_Mate = x;
-                            y_Mate = y;
-                        }
-                        else if (MAP[x][y].get(0) instanceof Fox){
+        updateMap();
 
-                            // Used by Male Foxes
-                            x_Mate = x;
-                            y_Mate = y;
-                        }
+        // *** ADD all the babies AFTER updating the map ***
 
-                        // return a null if the list there is empty
-                        if (MAP[x][y].isEmpty()){
-                            return null;
-                        } else {
-                            return MAP[x][y].get(0);
-                        }
+        grass.addAll(babyGrass); // When babyGrass becomes adults add them to the grass list
 
-                    } else {
-                        return checkCell(x, MAP_HEIGHT-1);
-                    }
-                } else {
-                    return checkCell(x, 0);
-                }
-            } else {
-                return checkCell(MAP_LENGTH-1, y);
-            }
-        } else {
-            return checkCell(0, y);
-        }
-    }
+        // Clear every List
+        deadPlants.clear(); // Clear the List of deadPlants when all the plants have been removed from other Lists
+        deadAnimals.clear(); // Clear the list of deadAnimals when all the animals have been removed from other Lists
+        babyGrass.clear(); // Clear List of babyAnimals when all new entities have been added to other lists
 
-    private void calculateEnergy(Animal animal) {
+        // Updates the SimVariables
+        input.grass = grass.size();
+        input.bunnies = bunnies.size();
+        input.foxes = foxes.size();
 
-    }
-
-    private void calculateSexualNeed(Animal animal) {
-
-    }
-
-    private void calculateEvasion(Animal prey, Animal predator) {
-
-    }
-
-    private void calculateHunger(Animal animal) {
-
-    }
-
-    private void movement() {
-
-    }
-
-    private void rest() {
-
-    }
-
-    /**
-     * The reproduction method which updates the ArrayList babyGrass and places the seedling on the map
-     * Plants reproduce by finding any emptySpace
-     * TODO add more complexity to plant reproduction
-     *
-     * @param plant the plant which is reproducing
-     */
-    private void reproduce(Plant plant){
-
-        // Checks which species of plant it is
-        if (plant instanceof Grass){
-            Grass seedling = new Grass(x_Empty,y_Empty,0);
-            MAP[seedling.getX()][seedling.getY()].add(seedling);
-            babyGrass.add(seedling);
-        }
-    }
-
-    private void reproduce(Animal animal) {
-
-    }
-
-    /**
-     * Plant aging which calculates a death chance based on the plant's age.
-     * The closer it gets to it's MAX AGE the higher the death chance
-     *
-     * TODO implement Life Stages (seed | sapling | plant)
-     *
-     * @param plant the plant to be aged by 1
-     */
-    private void age(Plant plant){
-
-        // Age one iteration
-        plant.setAge(plant.getAge() + 1);
-
-        double chanceDeath = plant.getAge() / plant.getMaxAge(); // How close the plant is to MAX age
-
-        // The different cases for the chances that the animal dies the closer it gets to it's MAX age
-        if (chanceDeath >= 1){
-            chanceDeath = chanceDeath * ThreadLocalRandom.current().nextInt(98, 100); // 1/2 chance it dies
-        }
-        else if (1 < chanceDeath && chanceDeath >= 0.9){
-            chanceDeath = chanceDeath * ThreadLocalRandom.current().nextInt(95, 100); // 1/5 chance it dies
-        }
-        else if (0.9 < chanceDeath && chanceDeath >= 0.8){
-            chanceDeath = chanceDeath * ThreadLocalRandom.current().nextInt(90, 100); // 1/10 chance it dies
-        }
-        else if (0.8 < chanceDeath && chanceDeath >= 0.7){
-            chanceDeath = chanceDeath * ThreadLocalRandom.current().nextInt(80, 100); // 1/20 chance it dies
-        }
-        else if (0.7 < chanceDeath && chanceDeath >= 0.6){
-            chanceDeath = chanceDeath * ThreadLocalRandom.current().nextInt(70, 100); // 1/30 chance it dies
-        }
-        else if (0.6 < chanceDeath && chanceDeath >= 0.5){
-            chanceDeath = chanceDeath * ThreadLocalRandom.current().nextInt(50, 100); // 1/50 chance it dies
-        }
-            // When chance of death is higher than 100% the plant dies
-        if (chanceDeath >= 100){
-            deadPlants.add(plant);
-        }
-    }
-
-    /**
-     * Animal aging which claculates a deathc chance based on the animal's age
-     * The close it gets to it's MAX AGE the higher the death chance
-     *
-     * TODO implement Life Stages (baby | young adult | adult)
-     *
-     * @param animal animal which will be aged
-     */
-    private void age(Animal animal) {
-        // Age one iteration
-        animal.setAge(animal.getAge() + 1);
-
-        double chanceDeath = animal.getAge() / animal.getMaxAge(); // How close the plant is to MAX age
-
-        // The different cases for the chances that the animal dies the closer it gets to it's MAX age
-        if (chanceDeath >= 1){
-            chanceDeath = chanceDeath * ThreadLocalRandom.current().nextInt(98, 100); // 1/2 chance it dies
-        }
-        else if (1 < chanceDeath && chanceDeath >= 0.9){
-            chanceDeath = chanceDeath * ThreadLocalRandom.current().nextInt(95, 100); // 1/5 chance it dies
-        }
-        else if (0.9 < chanceDeath && chanceDeath >= 0.8){
-            chanceDeath = chanceDeath * ThreadLocalRandom.current().nextInt(90, 100); // 1/10 chance it dies
-        }
-        else if (0.8 < chanceDeath && chanceDeath >= 0.7){
-            chanceDeath = chanceDeath * ThreadLocalRandom.current().nextInt(80, 100); // 1/20 chance it dies
-        }
-        else if (0.7 < chanceDeath && chanceDeath >= 0.6){
-            chanceDeath = chanceDeath * ThreadLocalRandom.current().nextInt(70, 100); // 1/30 chance it dies
-        }
-        else if (0.6 < chanceDeath && chanceDeath >= 0.5){
-            chanceDeath = chanceDeath * ThreadLocalRandom.current().nextInt(50, 100); // 1/50 chance it dies
-        }
-
-
-        // When chance of death is higher than 100% the plant dies
-        if (chanceDeath >= 100){
-            deadAnimals.add(animal);
-        }
-    }
-
-    /**
-     * Updates the map with the *** dead *** this is done so that dead are not counted during the iteration
-     * and will be shown on the graph after the iteration as null
-     *
-     */
-    private void updateMap(){
-
-        // Updates all the dead plants
-        for (Plant plant: deadPlants){
-
-            // Goes through all the objects at that cell
-            for (int index = 0; index < MAP[plant.getX()][plant.getY()].size(); index++){
-
-                // If the animal is still on the map get rid of it
-                if (MAP[plant.getX()][plant.getY()].get(index) == plant){
-                    MAP[plant.getX()][plant.getY()].remove(plant);
-                }
-            }
-        }
-
-        // Updates all the dead animals
-        for (Animal animal: deadAnimals){
-
-            // Goes through all the objects at that cell
-            for (int index = 0; index < MAP[animal.getX()][animal.getY()].size(); index++){
-
-                // If the animal is still on the map get rid of it
-                if (MAP[animal.getX()][animal.getY()].get(index) == animal){
-                    MAP[animal.getX()][animal.getY()].remove(animal);
-                }
-            }
-        }
-
-    }
-
-    /** *** TEMPORARY SOLUTION ***
-     * TODO print this to the user instead of the console
-     */
-    public void printMAP(){
-
-        // Printing the map
-        System.out.println("-------------------------------------------------");
-        for (int row = 0; row < MAP_HEIGHT; row++) {
-            System.out.println();
-            for (int column = 0; column < MAP_LENGTH; column++) {
-                if (column == 0) {
-                    System.out.print("| ");
-                }
-
-                // If the ArrayList at that column is empty print a NULL
-                // TODO print ALL entities in a list
-                if (MAP[column][row].isEmpty()){
-                    System.out.print("  ~  ");
-                } else if (MAP[column][row].get(0) instanceof Plant){
-                    System.out.print("Grass");
-                } else if (MAP[column][row].get(0) instanceof Bunny){
-                    System.out.print("Bunny");
-                }
-                else if (MAP[column][row].get(0) instanceof Fox){
-                    System.out.print(" Fox ");
-                }
-
-                System.out.print(" | ");
-            }
-        }
-        System.out.println();
-        System.out.println();
-        System.out.println("-------------------------------------------------");
+        return input;
     }
 
     /**
