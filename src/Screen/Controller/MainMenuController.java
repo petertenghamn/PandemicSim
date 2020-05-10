@@ -53,15 +53,14 @@ public class MainMenuController implements Interface_MainMenuController {
             setBunnyPop();
             setGrassPop();
 
-            File path = new File("src/Resources/sample.fxml");
+            File path = new File("src/Resources/SimView.fxml");
             URL url = path.toURL();
 
             FXMLLoader loader = new FXMLLoader(url);
             Parent root = loader.load();
 
-            // Controller class for testing
-            Controller controller = loader.getController();
-            controller.setText(simVariables.foxes, simVariables.bunnies, simVariables.grass);
+            SimController simController = loader.getController();
+            simController.runProgram(simVariables.grass,simVariables.bunnies,simVariables.foxes);
 
             Scene scene = new Scene(root);
             Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();

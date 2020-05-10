@@ -47,7 +47,7 @@
       <TextField fx:id="rabbitPop" layoutX="290.0" layoutY="163.0" prefHeight="25.0" prefWidth="44.0" />
       <TextField fx:id="grassPop" layoutX="290.0" layoutY="193.0" prefHeight="25.0" prefWidth="44.0" />
       <Button fx:id="runSimBtn" layoutX="160.0" layoutY="239.0" mnemonicParsing="false" onAction="#runSim" prefHeight="25.0" prefWidth="155.0" text="Run Simulation" />
-      <Button fx:id="resultListBtn" layoutX="160.0" layoutY="309.0" mnemonicParsing="false" onAction="#getResultList" prefHeight="25.0" prefWidth="155.0" text="Result List" />
       <Button fx:id="prevResultBtn" layoutX="160.0" layoutY="274.0" mnemonicParsing="false" onAction="#viewPrevResult" prefHeight="25.0" prefWidth="155.0" text="Previous Result" />
+      <Button fx:id="resultListBtn" layoutX="160.0" layoutY="309.0" mnemonicParsing="false" onAction="#getResultList" prefHeight="25.0" prefWidth="155.0" text="Result List" />
    </children>
 </AnchorPane>

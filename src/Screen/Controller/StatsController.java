@@ -17,8 +17,6 @@ public class StatsController implements Interface_StatsController, Initializable
 
 
     @FXML private LineChart<?, ?> lineChart;
-    @FXML private CategoryAxis xAxis;
-    @FXML private NumberAxis yAxis;
 
     @FXML private PieChart pieChart;
 
@@ -48,9 +46,9 @@ public class StatsController implements Interface_StatsController, Initializable
 
         // fills testValues arrays with random numbers
         for (int i = 0; i < 20; i++){
-            testValues1[i] = ThreadLocalRandom.current().nextInt(0,80);
-            testValues2[i] = ThreadLocalRandom.current().nextInt(20,100);
-            testValues3[i] = ThreadLocalRandom.current().nextInt(15,70);
+            testValues1[i] = ThreadLocalRandom.current().nextInt(0,25);
+            testValues2[i] = ThreadLocalRandom.current().nextInt(0,25);
+            testValues3[i] = ThreadLocalRandom.current().nextInt(0,25);
         }
 
         // Creating the lines
@@ -74,6 +72,7 @@ public class StatsController implements Interface_StatsController, Initializable
         }
 
         // adds the lines to the line chart
+        lineChart.setCreateSymbols(false);
         lineChart.getData().addAll(foxes, bunnies, plants);
 
     }
