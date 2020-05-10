@@ -40,8 +40,8 @@ public class DynamicAlgorithm implements Interface_DynamicAlgorithm {
     // Variables
     private int x_Empty; // X Coordinate of spotted empty cell
     private int y_Empty; // Y Coordinate of spotted empty cell
-    private int x_Prey; // X Coordinate of spotted prey
-    private int y_Prey; // Y Coordinate of spotted prey
+    private int x_Food; // X Coordinate of spotted prey
+    private int y_Food; // Y Coordinate of spotted prey
     private int x_Mate; // X Coordinate of spotted mate
     private int y_Mate; // Y Coordinated of spotted mate
 
@@ -74,39 +74,32 @@ public class DynamicAlgorithm implements Interface_DynamicAlgorithm {
      * Plant aging which calculates a death chance based on the plant's age.
      * The closer it gets to it's MAX AGE the higher the death chance
      *
-     * TODO implement Life Stages (seed | sapling | plant)
+     * TODO implement Life Stages (seed | sapling | mature)
      *
      * @param plant the plant to be aged by 1
      */
     private void age(Plant plant){
+
+        double MAX_SEEDLING_AGE_PERCENTAGE = 0.02; // MAX age percentage of the "Seedling" lifeStage
+        double MAX_SAPLING_AGE_PERCENTAGE = 0.05; // MAX age percentage of the "Sapling" lifeStage
 
         // Age one iteration
         plant.setAge(plant.getAge() + 1);
 
         double chanceDeath = plant.getAge() / plant.getMaxAge(); // How close the plant is to MAX age
 
-        // The different cases for the chances that the animal dies the closer it gets to it's MAX age
-        if (chanceDeath >= 1){
-            chanceDeath = chanceDeath * ThreadLocalRandom.current().nextInt(98, 100); // 1/2 chance it dies
+        // Sets the lifeStage of the plant depending on the percentage of life lived: age / MAX age
+        if (chanceDeath <= MAX_SEEDLING_AGE_PERCENTAGE){
+            plant.setLifeStage("Seedling");
+            plant.setEdible(false);
         }
-        else if (1 < chanceDeath && chanceDeath >= 0.9){
-            chanceDeath = chanceDeath * ThreadLocalRandom.current().nextInt(95, 100); // 1/5 chance it dies
+        else if (MAX_SEEDLING_AGE_PERCENTAGE < chanceDeath && chanceDeath <= MAX_SAPLING_AGE_PERCENTAGE){
+            plant.setLifeStage("Sapling");
+            plant.setEdible(true);
         }
-        else if (0.9 < chanceDeath && chanceDeath >= 0.8){
-            chanceDeath = chanceDeath * ThreadLocalRandom.current().nextInt(90, 100); // 1/10 chance it dies
-        }
-        else if (0.8 < chanceDeath && chanceDeath >= 0.7){
-            chanceDeath = chanceDeath * ThreadLocalRandom.current().nextInt(80, 100); // 1/20 chance it dies
-        }
-        else if (0.7 < chanceDeath && chanceDeath >= 0.6){
-            chanceDeath = chanceDeath * ThreadLocalRandom.current().nextInt(70, 100); // 1/30 chance it dies
-        }
-        else if (0.6 < chanceDeath && chanceDeath >= 0.5){
-            chanceDeath = chanceDeath * ThreadLocalRandom.current().nextInt(50, 100); // 1/50 chance it dies
-        }
-        // When chance of death is higher than 100% the plant dies
-        if (chanceDeath >= 100){
-            deadPlants.add(plant);
+        else if (MAX_SAPLING_AGE_PERCENTAGE < chanceDeath){
+            plant.setLifeStage("Mature");
+            plant.setEdible(true);
         }
     }
 
@@ -158,17 +151,19 @@ public class DynamicAlgorithm implements Interface_DynamicAlgorithm {
     /** *** Part of an Overloaded Method ***
      * The reproduction method which updates the ArrayList babyGrass and places the seedling on the map
      * Plants reproduce by finding any emptySpace
-     * TODO add more complexity to plant reproduction
      *
      * @param plant the plant which is reproducing
      */
     private void reproduce(Plant plant){
 
-        // Checks which species of plant it is
-        if (plant instanceof Grass){
-            Grass seedling = new Grass(x_Empty,y_Empty,0);
-            MAP[seedling.getX()][seedling.getY()].add(seedling);
-            babyGrass.add(seedling);
+        // Only Mature plants can reproduce
+        if (plant.getLifeStage().equals("Mature")) {
+            // Checks which species of plant it is
+            if (plant instanceof Grass) {
+                Grass seedling = new Grass(x_Empty, y_Empty, 0);
+                MAP[seedling.getX()][seedling.getY()].add(seedling);
+                babyGrass.add(seedling);
+            }
         }
     }
 
@@ -186,10 +181,25 @@ public class DynamicAlgorithm implements Interface_DynamicAlgorithm {
      * @param animal animal which will be aged
      */
     private void age(Animal animal) {
+
+        double MAX_BABY_AGE_PERCENTAGE = 0.18; // MAX age percentage of the "Baby" lifeStage
+        double MAX_YA_AGE_PERCENTAGE = 0.28; // MAX age percentage of the "Young Adult" lifeStage
+
         // Age one iteration
         animal.setAge(animal.getAge() + 1);
 
         double chanceDeath = animal.getAge() / animal.getMaxAge(); // How close the plant is to MAX age
+
+        // Sets the lifeStage of the plant depending on the percentage of life lived: age / MAX age
+        if (chanceDeath <= MAX_BABY_AGE_PERCENTAGE){
+            animal.setLifeStage("Baby");
+        }
+        else if (MAX_BABY_AGE_PERCENTAGE < chanceDeath && chanceDeath <= MAX_YA_AGE_PERCENTAGE){
+            animal.setLifeStage("Young Adult");
+        }
+        else if (MAX_YA_AGE_PERCENTAGE < chanceDeath){
+            animal.setLifeStage("Adult");
+        }
 
         // The different cases for the chances that the animal dies the closer it gets to it's MAX age
         if (chanceDeath >= 1){
@@ -226,9 +236,11 @@ public class DynamicAlgorithm implements Interface_DynamicAlgorithm {
      *  methods used:
      *      generateRandomOrder();
      *      checkCell();
+     *      isFood();
      *
      *  variables changed:
-     *      spottedSurroundings
+     *      x_Food & y_Food - updates the closest food source
+     *      spottedSurroundings - updates all spotted objects around
      *
      *
      * @param animal the animal that will look around it's coordinates
@@ -249,11 +261,123 @@ public class DynamicAlgorithm implements Interface_DynamicAlgorithm {
 
             spottedObject = checkCase(checking, animal.getX(), animal.getY());
 
+            // Checks to see if the spottedObject is food
+            if (isFood(spottedObject, animal)){
+                if (spottedObject instanceof  Plant){
+                    Plant food = (Plant) spottedObject;
+
+                    // Set Coordinates of food
+                    x_Food = food.getX();
+                    y_Food = food.getY();
+                }
+                else if (spottedObject instanceof Animal){
+                    Animal food = (Animal) spottedObject;
+
+                    // Set Coordinates of food
+                    x_Food = food.getX();
+                    y_Food = food.getY();
+                }
+            }
+
             // True value is ignored because it means it found itself
             if (!(spottedObject instanceof Boolean)) {
                 spottedSurroundings.add(spottedObject);
             }
         }
+    }
+
+    /**
+     * Determines whether the object parameter is a food source for the animal parameter
+     * this is determined using the Animal.diet and the Animal.lifeStage
+     * babies can use their parents as a food source
+     *
+     * TODO determine which Animals / Plants the animal species can eat
+     * TODO if parent = male then parent must have food with them
+     *
+     * @param object The object which is being considered as food
+     * @param animal The animal which is looking for food
+     * @return True | False depending if it is a viable food source for the Animal
+     */
+    private boolean isFood(Object object, Animal animal){
+
+        Plant plant;
+        Animal prey;
+
+        // Checks to see if the that the object is not empty and is not itself
+        if (object != null){
+            if (!(object instanceof Boolean)) {
+
+                // Babies use their parents as their food source
+                if (animal.getLifeStage().equals("Baby")) {
+
+                    for (Animal parent: animal.getParents()){
+
+                        if (object == parent){
+                            return true;
+                        }
+                    }
+                } else {
+
+                    // The Dietary choices available to an animal
+                    switch (animal.getDiet()) {
+                        case "Herbivore":
+
+                            // Herbivores can eat all plants
+                            if (object instanceof Plant) {
+                                plant = (Plant) object;
+
+                                // If the plant is at an edible stage return = true;
+                                return plant.isEdible();
+                            }
+
+                            break;
+                        case "Carnivore":
+
+                            // Carnivores can eat all Animals with low chance for cannibalism
+                            if (object instanceof Animal) {
+                                prey = (Animal) object;
+
+                                if (prey.getSpecies().equals(animal.getSpecies())) {
+
+                                    // Will only result to cannibalism when hunger is unbearable
+                                    if (animal.getHunger() >= 99) {
+                                        return true;
+                                    }
+                                    else return false;
+
+                                } else {
+                                    return true;
+                                }
+                            }
+
+                            break;
+                        case "Omnivore":
+
+                            // Omnivores can eat all Plants and Animals with low chance for cannibalism
+                            if (object instanceof Plant || object instanceof Animal) {
+
+                                prey = (Animal) object;
+
+                                if (prey.getSpecies().equals(animal.getSpecies())) {
+
+                                    // Will only result to cannibalism when hunger is unbearable
+                                    if (animal.getHunger() >= 99) {
+                                        return true;
+                                    }
+                                    else return false;
+
+                                } else {
+                                    return true;
+                                }
+                            }
+
+                            break;
+                    }
+                }
+            }
+        }
+
+        return false;
     }
 
     // TODO *** WORK IN PROGRESS ***
@@ -562,26 +686,6 @@ public class DynamicAlgorithm implements Interface_DynamicAlgorithm {
                             x_Empty = x;
                             y_Empty = y;
                         }
-                        else if (MAP[x][y].get(0) instanceof Bunny){
-
-                            // Used by Predators
-                            x_Prey = x;
-                            y_Prey = y;
-
-                            // Used by Male Bunnies
-                            x_Mate = x;
-                            y_Mate = y;
-                        }
-                        else if (MAP[x][y].get(0) instanceof Fox){
-
-                            // Used by Predators
-                            x_Prey = x;
-                            y_Prey = y;
-
-                            // Used by Male Foxes
-                            x_Mate = x;
-                            y_Mate = y;
-                        }
 
                         // return a null if the list there is empty
                         if (MAP[x][y].isEmpty()){
@@ -799,7 +903,7 @@ public class DynamicAlgorithm implements Interface_DynamicAlgorithm {
      *                  sight
      *                  reproduction
      *                  dying of old age
-     *                  TODO IMPLEMENT Life Stages ( BABY | YOUNG ADULT | ADULT )
+     *                  Life Stages ( Seedling | Sapling | Mature )
      *
      *          Bunny:
      *                  age
@@ -812,14 +916,14 @@ public class DynamicAlgorithm implements Interface_DynamicAlgorithm {
      *                  TODO energy levels
      *                  TODO hunger levels
      *                  TODO predator evasion
-     *                  TODO IMPLEMENT Life Stages ( BABY | YOUNG ADULT | ADULT )
+     *                  TODO IMPLEMENT Life Stages ( Seedling | Sapling | Mature )
      *
      *          Fox:
      *                  age
      *                  sight
      *                  TODO gender
      *                  TODO reproduction
-     TODO food search
+     *                  TODO food search
      *                  TODO mate search
      *                  dying of old age
      *                  TODO energy levels
@@ -841,7 +945,7 @@ public class DynamicAlgorithm implements Interface_DynamicAlgorithm {
 
             age(plant);
 
-            // Plants reproduce if any cell around them is NULL
+            // Plants reproduce if any cell they can see is NULL
             emptyCount = checkSurroundings(plant);
             if (emptyCount > 0){
                 reproduce(plant);
@@ -854,7 +958,6 @@ public class DynamicAlgorithm implements Interface_DynamicAlgorithm {
             age(bunny);
 
             checkSurroundings(bunny);
-
 
         }
 
@@ -906,12 +1009,12 @@ public class DynamicAlgorithm implements Interface_DynamicAlgorithm {
 
         // Initialize the DynamicAlgorithm Simulation
         // TODO input MAP_LENGTH and MAP_HEIGHT from the user
-        DynamicAlgorithm simulation = new DynamicAlgorithm(2, 2,
+        DynamicAlgorithm simulation = new DynamicAlgorithm(28, 38,
                                                             simVariables.grass,
                                                             simVariables.bunnies,
                                                             simVariables.foxes);
 
-        int TOTAL_ITERATIONS = 10;
+        int TOTAL_ITERATIONS = 100;
 
         simulation.printMAP();
 
