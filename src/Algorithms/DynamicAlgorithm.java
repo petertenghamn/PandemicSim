@@ -266,100 +266,6 @@ public class DynamicAlgorithm implements Interface_DynamicAlgorithm {
     }
 
     /**
-     * Determines whether the object parameter is a food source for the animal parameter
-     * this is determined using the Animal.diet and the Animal.lifeStage
-     * babies can use their parents as a food source
-     *
-     * TODO determine which Animals / Plants the animal species can eat
-     * TODO if parent = male then parent must have food with them
-     *
-     * @param object The object which is being considered as food
-     * @param animal The animal which is looking for food
-     * @return True | False depending if it is a viable food source for the Animal
-     */
-    private boolean isFood(Object object, Animal animal){
-
-        Plant plant;
-        Animal prey;
-
-        // Checks to see if the that the object is not empty and is not itself
-        if (object != null){
-            if (!(object instanceof Boolean)) {
-
-                // Babies use their parents as their food source
-                if (animal.getLifeStage().equals("Baby")) {
-
-                    for (Animal parent: animal.getParents()){
-
-                        if (object == parent){
-                            return true;
-                        }
-                    }
-                } else {
-
-                    // The Dietary choices available to an animal
-                    switch (animal.getDiet()) {
-                        case "Herbivore":
-
-                            // Herbivores can eat all plants
-                            if (object instanceof Plant) {
-                                plant = (Plant) object;
-
-                                // If the plant is at an edible stage return = true;
-                                return plant.isEdible();
-                            }
-
-                            break;
-                        case "Carnivore":
-
-                            // Carnivores can eat all Animals with low chance for cannibalism
-                            if (object instanceof Animal) {
-                                prey = (Animal) object;
-
-                                if (prey.getSpecies().equals(animal.getSpecies())) {
-
-                                    // Will only result to cannibalism when hunger is unbearable
-                                    if (animal.getHunger() >= 99) {
-                                        return true;
-                                    }
-                                    else return false;
-
-                                } else {
-                                    return true;
-                                }
-                            }
-
-                            break;
-                        case "Omnivore":
-
-                            // Omnivores can eat all Plants and Animals with low chance for cannibalism
-                            if (object instanceof Plant || object instanceof Animal) {
-
-                                prey = (Animal) object;
-
-                                if (prey.getSpecies().equals(animal.getSpecies())) {
-
-                                    // Will only result to cannibalism when hunger is unbearable
-                                    if (animal.getHunger() >= 99) {
-                                        return true;
-                                    }
-                                    else return false;
-
-                                } else {
-                                    return true;
-                                }
-                            }
-
-                            break;
-                    }
-                }
-            }
-        }
-
-        return false;
-    }
-
-    /**
      * Calculates the animal's hunger (range: 0 -> 100) based on its energy levels.
      * The animal has a chance to die (increases with age) if hunger level is at 100
      *
@@ -519,12 +425,46 @@ public class DynamicAlgorithm implements Interface_DynamicAlgorithm {
             // TODO implement seasons
             // Foxes have sex during Dec - Mar
             // Foxes are monogamous who wait to have sex again until their babies are grown
-            if (animal.getBabies().length == 0){
-                sexNeed++;
+            if (!animal.isPregnant()){
+                if (animal.getBabies() != null) {
+                    if (animal.getBabies().length == 0) {
+                        sexNeed++;
+                    }
+                }
             }
         }
 
         animal.setSexNeed(sexNeed);
+    }
+
+    /**
+     * Checks to see if the animal and the object are compatible for mating
+     *
+     * @param object object which is going to be a candidate for mating
+     * @param animal animal which is searching for a mate
+     * @return True = object compatible for mating | False = object not compatible for mating
+     */
+    private boolean isMate(Object object, Animal animal){
+
+        // Checks if the object is an animal
+        if (object instanceof Animal){
+            Animal mate = (Animal) object;
+
+            // Checks to see if the animals are the same species
+            if (animal.getSpecies().equals(mate.getSpecies())){
+
+                // Checks if the animals are different sexes
+                if (animal.isFemale() != mate.isFemale()){
+
+                    // Checks if the animal nor the mate are pregnant
+                    if (!animal.isPregnant() && !mate.isPregnant()){
+                        return true;
+                    }
+                }
+            }
+        }
+
+        return false;
     }
 
     // TODO *** WORK IN PROGRESS ***
@@ -581,21 +521,15 @@ public class DynamicAlgorithm implements Interface_DynamicAlgorithm {
             if (!animal.isResting() && animal.getHunger() < animal.getSexNeed() && animal.getClass().equals(spottedObject) ) {
                 animal.setEnergy(animal.getEnergy() - MOVEMENT_ENERGY_COST);
 
-                if (spottedObject instanceof Animal){
+                if (isMate(spottedObject, animal)){
+
                     Animal mate = (Animal) spottedObject;
 
-                    // Checks if the animals are different sexes
-                    if (animal.isFemale() != mate.isFemale()){
+                    // Set Coordinates of mate
+                    x_Priority = mate.getX();
+                    y_Priority = mate.getY();
 
-                        // Checks if the animal nor the mate are pregnant
-                        if (!animal.isPregnant() && !mate.isPregnant()){
-                            // Set Coordinates of mate
-                            x_Priority = mate.getX();
-                            y_Priority = mate.getY();
-
-                            moving = true;
-                        }
-                    }
+                    moving = true;
                 }
             }
 
@@ -678,9 +612,233 @@ public class DynamicAlgorithm implements Interface_DynamicAlgorithm {
         }
     }
 
-    // TODO *** WORK IN PROGRESS ***
-    private void evasion(Animal prey, Animal predator) {
+    /**
+     * Determines whether the object parameter is a food source for the animal parameter
+     * this is determined using the Animal.diet and the Animal.lifeStage
+     * babies can use their parents as a food source
+     *
+     * TODO determine which Animals / Plants the animal species can eat
+     * TODO if parent = male then parent must have food with them
+     *
+     * @param object The object which is being considered as food
+     * @param animal The animal which is looking for food
+     * @return True | False depending if it is a viable food source for the Animal
+     */
+    private boolean isFood(Object object, Animal animal){
 
+        Plant plant;
+        Animal prey;
+
+        // Checks to see if the that the object is not empty and is not itself
+        if (object != null){
+            if (!(object instanceof Boolean)) {
+
+                // Babies use their parents as their food source
+                if (animal.getLifeStage().equals("Baby")) {
+                    if (animal.getParents() != null) {
+                        for (Animal parent : animal.getParents()) {
+
+                            if (object == parent) {
+                                return true;
+                            }
+                        }
+                    }
+                } else {
+
+                    // The Dietary choices available to an animal
+                    switch (animal.getDiet()) {
+                        case "Herbivore":
+
+                            // Herbivores can eat all plants
+                            if (object instanceof Plant) {
+                                plant = (Plant) object;
+
+                                // If the plant is at an edible stage return = true;
+                                return plant.isEdible();
+                            }
+
+                            break;
+                        case "Carnivore":
+
+                            // Carnivores can eat all Animals with low chance for cannibalism
+                            if (object instanceof Animal) {
+                                prey = (Animal) object;
+
+                                if (prey.getSpecies().equals(animal.getSpecies())) {
+
+                                    // Will only result to cannibalism when hunger is unbearable
+                                    if (animal.getHunger() >= 99) {
+                                        return true;
+                                    }
+                                    else return false;
+
+                                } else {
+                                    return true;
+                                }
+                            }
+
+                            break;
+                        case "Omnivore":
+
+                            // Omnivores can eat all Plants and Animals with low chance for cannibalism
+                            if (object instanceof Plant || object instanceof Animal) {
+
+                                prey = (Animal) object;
+
+                                if (prey.getSpecies().equals(animal.getSpecies())) {
+
+                                    // Will only result to cannibalism when hunger is unbearable
+                                    if (animal.getHunger() >= 99) {
+                                        return true;
+                                    }
+                                    else return false;
+
+                                } else {
+                                    return true;
+                                }
+                            }
+
+                            break;
+                    }
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * The animal attempts to eat the food and lose hunger from it
+     * The loss of hunger depends on whether the food is a Plant or Animal
+     * and in what lifeStage the food is in.
+     * Animals also give a boost in hunger loss due to how close they are to Animal.ageMax
+     * Baby Animals can also feed off their parents
+     *
+     * @param food Object that is being eaten (Plant | Animal | Parent)
+     * @param animal the animal which is eating
+     */
+    private void attemptToFeed(Object food, Animal animal){
+
+        int hunger = animal.getHunger();
+        double hungerGain = 0;
+
+        // Food is a Plant
+        if (food instanceof Plant){
+            Plant plant = (Plant) food;
+
+            // Plant gives hunger recovery depending on it's life stage
+            switch (plant.getLifeStage()){
+                case "Seedling":{
+                    hungerGain = 10;
+                    break;
+                }
+                case "Sapling":{
+                    hungerGain = 15;
+                    break;
+                }
+                case "Mature":{
+                    hungerGain = 20;
+                    break;
+                }
+            }
+
+            hunger = (int) (hunger - hungerGain);
+
+            if (hunger < 0){
+                hunger = 0;
+            }
+
+            animal.setHunger(hunger);
+        }
+
+        // Food is an Animal
+        else if (food instanceof Animal){
+            Animal prey = (Animal) food;
+
+            // Baby animals get food from their parents
+            if (animal.getLifeStage().equals("Baby")){
+                for (Animal parent: animal.getParents()){
+                    if (parent == prey){
+                        animal.setHunger(animal.getHunger()-10);
+                        return;
+                    }
+                }
+            }
+
+            // Animal gives hunger recovery depending on it's life stage * percentage of life lived
+            switch (prey.getLifeStage()){
+                case "Baby":{
+                    hungerGain = 10 * (prey.getAge() / prey.getMaxAge());
+                    break;
+                }
+                case "Young Adult":{
+                    hungerGain = 15 * (prey.getAge() / prey.getMaxAge());
+                    break;
+                }
+                case "Adult":{
+                    hungerGain = 20 * (prey.getAge() / prey.getMaxAge());
+                    break;
+                }
+            }
+
+            if (!evadeSuccessfully(prey, animal)){
+                hunger = (int) (hunger - hungerGain);
+
+                if (hunger < 0){
+                    hunger = 0;
+                }
+
+                animal.setHunger(hunger);
+
+                deadAnimals.add(prey);
+            }
+        }
+    }
+
+    /**
+     * The predator will attempt to feed on the prey but the prey has a chance to have an extra move this iteration
+     * The chance of the extra move depends on the age difference between prey and predator
+     * The chance is also worsen if the prey has less energy than the predator
+     *
+     * @param prey the animal which is being hunted
+     * @param predator the animal which is hunting
+     * @return whether or not the prey got away True | False
+     */
+    private boolean evadeSuccessfully(Animal prey, Animal predator) {
+
+        int fleeingChance = 0;
+        double ageDifference = (prey.getAge() / prey.getMaxAge()) - (predator.getAge() / predator.getMaxAge());
+
+        // The prey has a higher chance of fleeing if it is older than its predator
+        // ageDifference range: -inf -> inf where a negative number means that the predator is older
+        // Any ageDifference higher than 1 or lower than -1 means that the animal is older than the expected max
+        if (1 <= ageDifference){
+            fleeingChance = ThreadLocalRandom.current().nextInt(90, 100); // 1 / 10 chance
+        } else if (0.5 <= ageDifference){
+            fleeingChance = ThreadLocalRandom.current().nextInt(75,100); // 1 / 25 chance
+        } else if (0 <= ageDifference){
+            fleeingChance = ThreadLocalRandom.current().nextInt(50,100); // 1 / 50 chance
+        } else if (-1 > ageDifference){
+            fleeingChance = ThreadLocalRandom.current().nextInt(40, 100); // 1 / 60 chance
+        } else if (-0.5 > ageDifference){
+            fleeingChance = ThreadLocalRandom.current().nextInt(25, 100); // 1 / 85 chance
+        } else if (0 > ageDifference){
+            fleeingChance = ThreadLocalRandom.current().nextInt(30,100 ); // 1 / 70 chance
+        }
+
+        // The prey has a lower chance of fleeing if it has less energy than its predator
+        if (prey.getEnergy() < predator.getEnergy()){
+            fleeingChance = fleeingChance * random.nextInt(100);
+        }
+
+        if (fleeingChance >= 100){
+            return false;
+        } else {
+            predator.setEnergy(predator.getEnergy() - 1);
+            prey.setResting(false); // change resting on the prey if evade was successful
+            movement(prey); // The prey moves away
+            return true;
+        }
     }
 
     /* ---------------------------------------------------------------------------------------------------
@@ -1192,7 +1350,7 @@ public class DynamicAlgorithm implements Interface_DynamicAlgorithm {
      *                  mate search
      *                  energy levels
      *                  hunger levels
-     *                  TODO evasion
+     *                  evasion
      *                  IMPLEMENT Life Stages ( Baby | Young Adult | Adult )
      *
      *          Fox:
@@ -1206,7 +1364,7 @@ public class DynamicAlgorithm implements Interface_DynamicAlgorithm {
      *                  dying of old age
      *                  energy levels
      *                  hunger levels
-     *                  TODO evasion
+     *                  evasion
      *                  IMPLEMENT Life Stages ( Baby | Young Adult | Adult )
      *
      *
@@ -1233,15 +1391,30 @@ public class DynamicAlgorithm implements Interface_DynamicAlgorithm {
 
         // Iterates through the bunnies turns
         for (Bunny bunny: bunnies){
-
             age(bunny);
 
             checkSurroundings(bunny);
+
             calculateHunger(bunny);
             calculateEnergy(bunny);
             calculateSexualNeed(bunny);
 
             movement(bunny);
+
+            for (Object object: MAP[bunny.getX()][bunny.getY()]){
+
+                // If it moved to a cell with food then it eats
+                if (isFood(object, bunny)){
+                    attemptToFeed(object, bunny);
+                }
+                else if (isMate(object, bunny)){
+                    reproduce(bunny);
+                }
+            }
+
+            if (bunny.isPregnant()){
+                calculatePregnancy(bunny);
+            }
         }
 
         // Iterates through the foxes turns
@@ -1249,6 +1422,27 @@ public class DynamicAlgorithm implements Interface_DynamicAlgorithm {
             age(fox);
 
             checkSurroundings(fox);
+
+            calculateHunger(fox);
+            calculateEnergy(fox);
+            calculateSexualNeed(fox);
+
+            movement(fox);
+
+            for (Object object: MAP[fox.getX()][fox.getY()]){
+
+                // If it moved to a cell with food then it eats
+                if (isFood(object, fox)){
+                    attemptToFeed(object, fox);
+                }
+                else if (isMate(object, fox)){
+                    reproduce(fox);
+                }
+            }
+
+            if (fox.isPregnant()){
+                calculatePregnancy(fox);
+            }
         }
 
         // *** Remove all dead things BEFORE updating the map ***
