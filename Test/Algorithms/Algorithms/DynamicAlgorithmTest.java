@@ -8,7 +8,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class DynamicAlgorithmTest {
 
     // Setup Variables
-    int TOTAL_ITERATIONS = 6;
+    int TOTAL_ITERATIONS = 10;
     int MAP_LENGTH = 3;
     int MAP_HEIGHT = 5;
     int INPUT_GRASS = 1;
