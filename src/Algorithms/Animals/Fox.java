@@ -12,7 +12,7 @@ public class Fox extends Animal {
         super(x, y, SPECIES, AGE_MAX, SIGHT, age, isFemale,100, 0, 0, DIET);
     }
 
-    private static final int AGE_MAX = 5 ; // see source 5 - Years
+    private static final int AGE_MAX = 5 ; // see source 5 Years
     private static final int SIGHT = 3; // MIN = 1
     private static final String SPECIES = "Fox"; // The name of the species of animal
     private static final String DIET = "Carnivore"; // Will only eat Animals TODO implement omnivore

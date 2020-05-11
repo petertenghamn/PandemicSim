@@ -380,25 +380,22 @@ public class DynamicAlgorithm implements Interface_DynamicAlgorithm {
         return false;
     }
 
-    // TODO *** WORK IN PROGRESS ***
-    private void reproduce(Animal animal) {
-
-    }
-
     /**
      * Calculates the animal's hunger (range: 0 -> 100) based on its energy levels.
      * The animal has a chance to die (increases with age) if hunger level is at 100
      *
+     * TODO Balance for 1 year = 1 iteration
+     *
      * @param animal animal which hunger is being calculated for
      */
-    private void calculateEnergy(Animal animal) {
+    private void calculateHunger(Animal animal) {
 
         double deathChance = animal.getAge() / animal.getMaxAge();
         double energy = animal.getEnergy();
         int hunger = animal.getHunger();
 
         // The animal has a increasing chance to die based on age when hunger levels are 100
-        if (animal.getHunger() == 100){
+        if (hunger == 100){
 
             // The different cases for the chances that the animal dies the closer it gets to it's MAX age
             if (1 <= deathChance){
@@ -461,28 +458,80 @@ public class DynamicAlgorithm implements Interface_DynamicAlgorithm {
         }
     }
 
+    /**
+     * Calculates the animal's energy (range: 0 -> 100) based on its hunger and energy levels.
+     * The animal will have an increasing chance to rest depending on its energy level
+     * an animal can not rest if:
+     *      it is at 100 energy or if it is above a certain hunger
+     *      is more hungry than tired
+     *
+     * an animal which is resting will gain energy
+     * an animal which is NOT resting will lose energy
+     *
+     * TODO Balance for 1 year = 1 iteration
+     *
+     * @param animal animal which energy is being calculated for
+     */
+    private void calculateEnergy(Animal animal) {
+
+        int restingChance;
+        int energy = animal.getEnergy();
+        int hunger = animal.getHunger();
+
+        // Energy is updated every turn if the animal is resting it gaines energy else it loses energy
+        if (animal.isResting()){
+            // Energy++
+            animal.setEnergy(energy + 1);
+        } else {
+            animal.setEnergy(energy - 1);
+        }
+
+        // Depending on the animal's energy and hunger levels there is an increasing chance it will rest
+        if (hunger >= 70 || energy >= 100){
+            restingChance = 0; // Animal can not rests if it has too much energy or is too hungry
+        } else if (hunger > energy){
+            restingChance = 0; // Animal won't rests if it's hungrier than tired
+        } else if (50 <= energy){
+            restingChance = ThreadLocalRandom.current().nextInt(40, 100); // 1 / 60 chance it rests
+        } else if (40 <= energy){
+            restingChance = ThreadLocalRandom.current().nextInt(50, 100); // 1 / 50 chance it rests
+        } else if (30 <= energy){
+            restingChance = ThreadLocalRandom.current().nextInt(60, 100); // 1 / 40 chance it rests
+        } else if (20 <= energy){
+            restingChance = ThreadLocalRandom.current().nextInt(70, 100); // 1 / 30 chance it rests
+        } else if (10 <= energy){
+            restingChance = ThreadLocalRandom.current().nextInt(80, 100); // 1 / 20 chance it rests
+        } else {
+            restingChance = ThreadLocalRandom.current().nextInt(90, 100); // 1 / 10 chance it rests
+        }
+
+
+        if (restingChance >= 100){
+            animal.setResting(true);
+        } else {
+            animal.setResting(false);
+        }
+    }
+
     // TODO *** WORK IN PROGRESS ***
     private void calculateSexualNeed(Animal animal) {
 
     }
 
+
+
     // TODO *** WORK IN PROGRESS ***
-    private void calculateEvasion(Animal prey, Animal predator) {
+    private void reproduce(Animal animal) {
 
     }
 
     // TODO *** WORK IN PROGRESS ***
-    private void calculateHunger(Animal animal) {
+    private void movement(Animal animal) {
 
     }
 
     // TODO *** WORK IN PROGRESS ***
-    private void movement() {
-
-    }
-
-    // TODO *** WORK IN PROGRESS ***
-    private void rest() {
+    private void evasion(Animal prey, Animal predator) {
 
     }
 
@@ -517,7 +566,7 @@ public class DynamicAlgorithm implements Interface_DynamicAlgorithm {
         ArrayList<Integer> randomOrder = new ArrayList<>();
 
         // Mat.pow(base, power) = base^power return type is double
-        int totalCells = 2 * ((((int) Math.pow(sight, 2)) + 3) * sight);
+        int totalCells = 2 * (((int) Math.pow(sight, 2)) + 3 * sight);
 
         while (randomOrder.size() < totalCells) {
 
@@ -1056,6 +1105,9 @@ public class DynamicAlgorithm implements Interface_DynamicAlgorithm {
             age(bunny);
 
             checkSurroundings(bunny);
+            calculateHunger(bunny);
+            calculateEnergy(bunny);
+            calculateSexualNeed(bunny);
 
             //TODO calculate priorities based on spottedObjects then in order:
             // TODO calculateSexNeed();

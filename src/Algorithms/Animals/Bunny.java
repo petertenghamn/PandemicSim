@@ -12,7 +12,7 @@ public class Bunny extends Animal {
         super(x, y, SPECIES, AGE_MAX, SIGHT, age,isFemale,100, 0, 0, DIET);
     }
 
-    private static final int AGE_MAX = 9 ; // see source 9 - Years
+    private static final int AGE_MAX = 9 ; // see source 9 Years
     private static final int SIGHT = 2; // MIN = 1
     private static final String SPECIES = "Bunny"; // The name of the species of animal
     private static final String DIET = "Herbivore"; // Will only eat Plants
