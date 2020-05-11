@@ -36,14 +36,11 @@ public class DynamicAlgorithm implements Interface_DynamicAlgorithm {
     // Constants
     public final int MAP_LENGTH; // Number of Columns in grid
     public final int MAP_HEIGHT; // Number of Rows in grid
+    private static final int MOVEMENT_ENERGY_COST = 1;
 
     // Variables
     private int x_Empty; // X Coordinate of spotted empty cell
     private int y_Empty; // Y Coordinate of spotted empty cell
-    private int x_Food; // X Coordinate of spotted prey
-    private int y_Food; // Y Coordinate of spotted prey
-    private int x_Mate; // X Coordinate of spotted mate
-    private int y_Mate; // Y Coordinated of spotted mate
 
     private ArrayList<Object> spottedObjects = new ArrayList<>(); // A list of the current entity spotted surroundings
 
@@ -260,24 +257,6 @@ public class DynamicAlgorithm implements Interface_DynamicAlgorithm {
         for (int checking: checkingOrder) {
 
             spottedObject = checkCase(checking, animal.getX(), animal.getY());
-
-            // Checks to see if the spottedObject is food
-            if (isFood(spottedObject, animal)){
-                if (spottedObject instanceof  Plant){
-                    Plant food = (Plant) spottedObject;
-
-                    // Set Coordinates of food
-                    x_Food = food.getX();
-                    y_Food = food.getY();
-                }
-                else if (spottedObject instanceof Animal){
-                    Animal food = (Animal) spottedObject;
-
-                    // Set Coordinates of food
-                    x_Food = food.getX();
-                    y_Food = food.getY();
-                }
-            }
 
             // True value is ignored because it means it found itself
             if (!(spottedObject instanceof Boolean)) {
@@ -513,12 +492,40 @@ public class DynamicAlgorithm implements Interface_DynamicAlgorithm {
         }
     }
 
-    // TODO *** WORK IN PROGRESS ***
+    /**
+     * Calculates the animal's sex need by increasing it every iteration depending on species rules
+     *
+     * @param animal animal which sex need will be calculated for
+     */
     private void calculateSexualNeed(Animal animal) {
 
+        int sexNeed = animal.getSexNeed();
+
+        // Bunny section of the method
+        if (animal instanceof Bunny){
+            if (animal.isAlpha()){
+                sexNeed++; // SexNeed increases every iteration for bunnies who are alphas
+            } else {
+                // Bunnies who are not alphas are monogamous and stay with their partner until no longer pregnant
+                // Bunnies who are pregnant don't have a need for sex
+                if (!animal.isPregnant()){
+                    sexNeed++;
+                }
+            }
+        }
+
+        // Fox section of the method
+        else if (animal instanceof Fox){
+            // TODO implement seasons
+            // Foxes have sex during Dec - Mar
+            // Foxes are monogamous who wait to have sex again until their babies are grown
+            if (animal.getBabies().length == 0){
+                sexNeed++;
+            }
+        }
+
+        animal.setSexNeed(sexNeed);
     }
-
-
 
     // TODO *** WORK IN PROGRESS ***
     private void reproduce(Animal animal) {
@@ -526,25 +533,155 @@ public class DynamicAlgorithm implements Interface_DynamicAlgorithm {
     }
 
     // TODO *** WORK IN PROGRESS ***
+    private void calculatePregnancy(Animal animal) {
+
+    }
+
+    /**
+     * Moves the animal based on certain priorities:
+     *      Mating
+     *          if the animal is not pregnant & hunger < sexNeed & there is mate candidate nearby & not resting
+     *      Hunting
+     *          if the animal hunger > sexNeed & there is food nearby & not resting
+     *      Exploring
+     *          if it has free energy & not resting & spotted and empty spot
+     *
+     * The animal will move towards the priority if the conditions were met otherwise it stays where it was
+     *
+     * Methods used:
+     *      isFood()
+     *
+     * Variables used:
+     *      MAP[][]
+     *      spottedSurroundings
+     *      MOVEMENT_ENERGY_COST
+     *      X & Y EMPTY
+     *
+     * @param animal the animal which will move
+     */
     private void movement(Animal animal) {
 
+        boolean moving = false;
+        Object spottedObject;
+
+        // The x-y coordinates of the object which is being prioritized
+        int x_Origin = animal.getX();
+        int y_Origin = animal.getY();
+        int x_Priority = x_Origin;
+        int y_Priority = y_Origin;
+        int x_New = x_Origin;
+        int y_New = y_Origin;
+
+
+        // Index 0 is skipped because every animal spots itself first
+        for (int index = 1; index < spottedObjects.size(); index++) {
+            spottedObject = spottedObjects.get(index);
+            // Priority MATING
+            // If the animal is NOT resting & hunger < sexNeed & same animal species
+            if (!animal.isResting() && animal.getHunger() < animal.getSexNeed() && animal.getClass().equals(spottedObject) ) {
+                animal.setEnergy(animal.getEnergy() - MOVEMENT_ENERGY_COST);
+
+                if (spottedObject instanceof Animal){
+                    Animal mate = (Animal) spottedObject;
+
+                    // Checks if the animals are different sexes
+                    if (animal.isFemale() != mate.isFemale()){
+
+                        // Checks if the animal nor the mate are pregnant
+                        if (!animal.isPregnant() && !mate.isPregnant()){
+                            // Set Coordinates of mate
+                            x_Priority = mate.getX();
+                            y_Priority = mate.getY();
+
+                            moving = true;
+                        }
+                    }
+                }
+            }
+
+            // Priority HUNTING
+            // if animal is NOT resting & hunger > sexNeed & spottedObject is food
+            else if (!animal.isResting() && animal.getHunger() > animal.getSexNeed() && isFood(spottedObject, animal)){
+                animal.setEnergy(animal.getEnergy() - MOVEMENT_ENERGY_COST);
+
+                if (spottedObject instanceof  Plant){
+                    Plant food = (Plant) spottedObject;
+
+                    // Set Coordinates of food
+                    x_Priority = food.getX();
+                    y_Priority = food.getY();
+
+                    moving = true;
+                }
+                else if (spottedObject instanceof Animal){
+                    Animal food = (Animal) spottedObject;
+
+                    // Set Coordinates of food
+                    x_Priority = food.getX();
+                    y_Priority = food.getY();
+
+                    moving = true;
+                }
+            }
+
+            // Priority EXPLORING
+            else if (!animal.isResting() && spottedObject == null && animal.getEnergy() > 0){
+                animal.setEnergy(animal.getEnergy() - MOVEMENT_ENERGY_COST);
+
+                x_Priority = x_Empty;
+                y_Priority = y_Empty;
+
+                moving = true;
+            }
+        }
+
+        // *** BEGIN OF ACTUAL MOVEMENT ***
+        if (moving){
+            /*
+                if (|X_spotted - X_Origin| >= 1)
+                    if (X_spotted - X_Origin is positive)
+                         X_New = X_Origin + 1;
+                    else if (X_Spotted - X_Origin is negative)
+                         X_New = X_Origin - 1;
+            */
+            if (Math.abs(x_Priority - x_Origin) >= 1){
+                if (x_Priority - x_Origin >= 0){
+                    x_New = x_Origin + 1;
+                }
+                else if (x_Priority - x_Origin < 0){
+                    x_New = x_Origin - 1;
+                }
+            }
+
+            /*
+                if (|Y_spotted - Y_Origin| >= 1)
+                    if (Y_spotted - Y_Origin is positive)
+                         Y_New = Y_Origin + 1;
+                    else if (Y_Spotted - Y_Origin is negative)
+                         Y_New = Y_Origin - 1;
+            */
+            if (Math.abs(y_Priority - y_Origin) >= 1){
+                if (y_Priority - y_Origin >= 0){
+                    y_New = y_Origin + 1;
+                }
+                else if (y_Priority - y_Origin < 0){
+                    y_New = y_Origin - 1;
+                }
+            }
+
+            MAP[x_Origin][y_Origin].remove(animal);
+
+            animal.setX(x_New);
+            animal.setY(y_New);
+
+            MAP[x_New][y_New].add(animal);
+        }
     }
 
     // TODO *** WORK IN PROGRESS ***
     private void evasion(Animal prey, Animal predator) {
 
     }
-
-    /* ---------------------------------------------------------------------------------------------------
-        *** The methods in this section should only be accessed by Prey ***
-       ---------------------------------------------------------------------------------------------------
-     */
-
-
-    /* ---------------------------------------------------------------------------------------------------
-        *** The methods in this section should only be accessed by Predators ***
-       ---------------------------------------------------------------------------------------------------
-     */
 
     /* ---------------------------------------------------------------------------------------------------
         *** The methods past this section are used as tools by the Class ***
@@ -904,14 +1041,9 @@ public class DynamicAlgorithm implements Interface_DynamicAlgorithm {
                 // Only shows the first entity in command line
                 // If the ArrayList at that cell is empty print a NULL
                 if (MAP[column][row].isEmpty()){
-                    System.out.print("  ~  ");
-                } else if (MAP[column][row].get(0) instanceof Plant){
-                    System.out.print("Grass " + grassCount);
-                } else if (MAP[column][row].get(0) instanceof Bunny){
-                    System.out.print("Bunny " + bunnyCount);
-                }
-                else if (MAP[column][row].get(0) instanceof Fox){
-                    System.out.print(" Fox " + foxCount);
+                    System.out.print("         ~         ");
+                } else {
+                    System.out.print(" Gr: " + grassCount + " Bu: " + bunnyCount + " Fx: " + foxCount + " ");
                 }
 
                 System.out.print(" | ");
@@ -1053,13 +1185,13 @@ public class DynamicAlgorithm implements Interface_DynamicAlgorithm {
      *                  age
      *                  sight
      *                  gender
-     *                  TODO movement
+     *                  movement
      *                  TODO reproduction
      *                  dying of old age
-     *                  TODO food search
-     *                  TODO mate search
-     *                  TODO energy levels
-     *                  TODO hunger levels
+     *                  food search
+     *                  mate search
+     *                  energy levels
+     *                  hunger levels
      *                  TODO evasion
      *                  IMPLEMENT Life Stages ( Baby | Young Adult | Adult )
      *
@@ -1067,13 +1199,13 @@ public class DynamicAlgorithm implements Interface_DynamicAlgorithm {
      *                  age
      *                  sight
      *                  gender
-     *                  TODO movement
+     *                  movement
      *                  TODO reproduction
-     *                  TODO food search
-     *                  TODO mate search
+     *                  food search
+     *                  mate search
      *                  dying of old age
-     *                  TODO energy levels
-     *                  TODO hunger levels
+     *                  energy levels
+     *                  hunger levels
      *                  TODO evasion
      *                  IMPLEMENT Life Stages ( Baby | Young Adult | Adult )
      *
@@ -1109,13 +1241,7 @@ public class DynamicAlgorithm implements Interface_DynamicAlgorithm {
             calculateEnergy(bunny);
             calculateSexualNeed(bunny);
 
-            //TODO calculate priorities based on spottedObjects then in order:
-            // TODO calculateSexNeed();
-            // TODO calculateEnergy();
-            // TODO calculateHunger();
-            // TODO movement();
-            // TODO feed();
-            // TODO reproduction();
+            movement(bunny);
         }
 
         // Iterates through the foxes turns
@@ -1161,12 +1287,12 @@ public class DynamicAlgorithm implements Interface_DynamicAlgorithm {
         // Initialize the SimVariables
         SimVariables simVariables = new SimVariables();
         simVariables.grass = 1;
-        simVariables.bunnies = 1;
+        simVariables.bunnies = 5;
         simVariables.foxes = 1;
 
-        // Initialize the DynamicAlgorithm Simulation
+        // Initialize the DynamicAlgorithm Simulation 22 38
         // TODO input MAP_LENGTH and MAP_HEIGHT from the user
-        DynamicAlgorithm simulation = new DynamicAlgorithm(22, 38,
+        DynamicAlgorithm simulation = new DynamicAlgorithm(10, 10,
                                                             simVariables.grass,
                                                             simVariables.bunnies,
                                                             simVariables.foxes);

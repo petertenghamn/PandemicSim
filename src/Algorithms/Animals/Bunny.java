@@ -9,11 +9,12 @@ package Algorithms.Animals;
  */
 public class Bunny extends Animal {
     public Bunny(int x, int y, int age, boolean isFemale) {
-        super(x, y, SPECIES, AGE_MAX, SIGHT, age,isFemale,100, 0, 0, DIET);
+        super(x, y, SPECIES, AGE_MAX, SIGHT, age,isFemale,100, 0, 0, DIET, GESTATION_TIME);
     }
 
-    private static final int AGE_MAX = 9 ; // see source 9 Years
+    private static final int AGE_MAX = 9 ; // 9 Years
     private static final int SIGHT = 2; // MIN = 1
+    private static final int GESTATION_TIME = 31; // Time it takes for babies to be born from start pregnancy (31 days)
     private static final String SPECIES = "Bunny"; // The name of the species of animal
     private static final String DIET = "Herbivore"; // Will only eat Plants
 }
