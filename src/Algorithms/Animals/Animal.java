@@ -2,6 +2,8 @@ package Algorithms.Animals;
 
 import Algorithms.Plants.Plant;
 
+import java.util.ArrayList;
+
 /**
  *  The Foundation and master class for Animals used in simulation inside the DynamicAlgorithm
  *
@@ -9,7 +11,7 @@ import Algorithms.Plants.Plant;
  * @see Plant
  */
 public abstract class Animal {
-    public Animal(int x, int y, String species, double maxAge, int sight, double age, boolean female, int energy, int sexNeed, int hunger, String diet, int gestationMax) {
+    public Animal(int x, int y, String species, double maxAge, int sight, double age, boolean female, int energy, int sexNeed, int hunger, String diet, int gestationMax, int literSize) {
         this.x = x;
         this.y = y;
         this.age = age;
@@ -19,6 +21,7 @@ public abstract class Animal {
         this.female = female;
 
         this.gestationMax = gestationMax;
+        this.literSize = literSize;
         this.diet = diet;
         this.species = species;
         this.maxAge = maxAge;
@@ -40,14 +43,16 @@ public abstract class Animal {
     private int sexNeed; // MIN = 0 | MAX = 100
     private int hunger; // MIN = 0 | MAX = 100
 
-    private Animal[] babies; // tracks of the animal's babies
-    private Animal[] parents; // tracks the animal's parents
+    private Animal mate; // tracks the mate of the animal
+    private ArrayList<Animal> babies; // tracks of the animal's babies
+    private ArrayList<Animal> parents; // tracks the animal's parents
 
     // *** Initialized in Constructor of SubClass ***
     private String diet; // Type of diet Carnivore | Omnivore | Herbivore
     private String species; // Name of the species
     private double maxAge; // Maximum age of the species
     private int gestationMax; // MAX time of being pregnant
+    private int literSize; // MAX number of babies per pregnancy
     private int sight; // How many grid spaces the animal can spot other entities hardcoded MAX = 3 see DynamicAlgorithm
 
     public int getX() {
@@ -74,11 +79,11 @@ public abstract class Animal {
         return pregnant;
     }
 
-    public Animal[] getBabies() {
+    public ArrayList<Animal> getBabies() {
         return babies;
     }
 
-    public Animal[] getParents() {
+    public ArrayList<Animal> getParents() {
         return parents;
     }
 
@@ -126,6 +131,14 @@ public abstract class Animal {
         return gestationMax;
     }
 
+    public int getLiterSize() {
+        return literSize;
+    }
+
+    public Animal getMate() {
+        return mate;
+    }
+
     public String getStatus() {
         return status;
     }
@@ -170,15 +183,19 @@ public abstract class Animal {
         this.female = female;
     }
 
+    public void setMate(Animal mate) {
+        this.mate = mate;
+    }
+
     public void setPregnant(boolean pregnant) {
         this.pregnant = pregnant;
     }
 
-    public void setBabies(Animal[] babies) {
+    public void setBabies(ArrayList<Animal> babies) {
         this.babies = babies;
     }
 
-    public void setParents(Animal[] parents) {
+    public void setParents(ArrayList<Animal> parents) {
         this.parents = parents;
     }
 
