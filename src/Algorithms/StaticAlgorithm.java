@@ -34,6 +34,32 @@ import java.util.Random;
  */
 public class StaticAlgorithm implements Interface_StaticAlgorithm {
 
+    //testing calculations
+    public static void main(String[] args) {
+        // Initialize the SimVariables
+        SimVariables simVariables = new SimVariables();
+        simVariables.grass = 1000;
+        simVariables.bunnies = 1000;
+        simVariables.foxes = 1000;
+
+        // Initialize the StaticAlgorithm
+        StaticAlgorithm algorithm = new StaticAlgorithm();
+
+        int TOTAL_ITERATIONS = 10;
+        System.out.println("Grass Population: " + simVariables.grass + " | " +
+                "Bunny Population: " + simVariables.bunnies + " | " +
+                "Fox Population: " + simVariables.foxes);
+
+        for (int i = 1; i < TOTAL_ITERATIONS; i++){
+            simVariables = algorithm.calculate(simVariables);
+
+            // Results after the iterations
+            System.out.println("Grass Population: " + simVariables.grass + " | " +
+                    "Bunny Population: " + simVariables.bunnies + " | " +
+                    "Fox Population: " + simVariables.foxes);
+        }
+    }
+
     /**
      * *** This is the only method that communicates outside of the class ***
      *  Using the SimVariables goes through the calculation for the different populations.
@@ -47,22 +73,15 @@ public class StaticAlgorithm implements Interface_StaticAlgorithm {
      */
     @Override
     public SimVariables calculate(SimVariables input) {
-        population_grass = input.grass;
-        population_bunny = input.bunnies;
-        population_fox = input.foxes;
+        SimVariables output = new SimVariables(input.grass, input.bunnies, input.foxes);
 
-        // Order of calculation is grass - fox - bunny | since foxes hunt in the morning
-        calculateGrassPopulation();
-        calculateFoxPopulation();
-        calculateBunnyPopulation();
+        // calculate the new populations based on the input variables
+        output.grass = calculateGrassPopulation(input);
+        output.bunnies = calculateBunnyPopulation(input);
+        output.foxes = calculateFoxPopulation(input);
 
-        return input;
+        return output;
     }
-
-    // Variables
-    private int population_grass;
-    private int population_bunny;
-    private int population_fox;
 
     // Widgets
     private Random random = new Random(); // Random Generator used in random placement in initialization
@@ -75,8 +94,10 @@ public class StaticAlgorithm implements Interface_StaticAlgorithm {
     /**
      *  Estimated new = 50  / iteration
      */
-    private void calculateGrassPopulation(){
-
+    private int calculateGrassPopulation(SimVariables input){
+        //growth in kg given the % spread to maturity percentiles
+        int grassGrowth = (int)(((input.grass * 0.8) * 0.9) * 0.6);
+        return input.grass + grassGrowth;
     }
 
     /* ---------------------------------------------------------------------------------------------------
@@ -87,8 +108,10 @@ public class StaticAlgorithm implements Interface_StaticAlgorithm {
     /**
      *  Estimated new = 3.81 * reproduction rate - death rate  / iteration
      */
-    private void calculateBunnyPopulation(){
-
+    private int calculateBunnyPopulation(SimVariables input){
+        //the pop change without calculating for foxes and lack of food...
+        int popChange = (int)((input.bunnies * (0.2 / 30)) - (input.bunnies * (0.25 / 365)));
+        return input.bunnies + popChange;
     }
 
     /* ---------------------------------------------------------------------------------------------------
@@ -99,7 +122,8 @@ public class StaticAlgorithm implements Interface_StaticAlgorithm {
     /**
      *  Estimated new = (2.22 -> 13.61) * reproduction rate - death rate / iteration
      */
-    private void calculateFoxPopulation(){
+    private int calculateFoxPopulation(SimVariables input){
 
+        return input.foxes;
     }
 }
