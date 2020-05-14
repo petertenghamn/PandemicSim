@@ -20,7 +20,7 @@ public class Database implements Interface_Database {
         GraphedData data = new GraphedData();
         ArrayList<SimVariables> variables = new ArrayList<>();
         for (int i = 0; i < 100; i++){
-            variables.add(new SimVariables(0,0,0));
+            variables.add(new SimVariables(i,(i * 2),(i/5)));
         }
         data.setVariables(variables);
 
