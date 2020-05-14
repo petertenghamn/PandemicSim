@@ -11,7 +11,7 @@ import java.util.ArrayList;
  * @see Plant
  */
 public abstract class Animal {
-    public Animal(int x, int y, String species, double maxAge, int sight, double age, boolean female, int energy, int sexNeed, int hunger, String diet, int gestationMax, int literSize) {
+    public Animal(int x, int y, String species, double maxAge, int sight, double age, int speed, boolean female, int energy, int sexNeed, int hunger, String diet, int gestationMax, int literSize, int maxBabyAge, int maxYAAge) {
         this.x = x;
         this.y = y;
         this.age = age;
@@ -20,18 +20,21 @@ public abstract class Animal {
         this.hunger = hunger;
         this.female = female;
 
+
+        this.maxBabyAge = maxBabyAge;
+        this.maxYAAge = maxYAAge;
         this.gestationMax = gestationMax;
         this.literSize = literSize;
         this.diet = diet;
         this.species = species;
         this.maxAge = maxAge;
         this.sight = sight;
+        this.speed = speed;
     }
 
     // Variables
     private int x; // MIN = 0 | MAX = GRID_LENGTH
     private int y; // MIN = 0 | MAX = GRID_HEIGHT
-    private int starvingCounter; // Turns that the animal has been at 100 hunger
     private double age; // MIN = 0 | MAX depends on species
     private boolean resting; // Determines if the animal can move or not
     private boolean female; // The determination of the animal's sex True = Female | False = Male
@@ -41,8 +44,14 @@ public abstract class Animal {
     private String status; // Exploring | Hunting | Eating | Drinking | Mating | ect.
     private int gestation; // Time from start of pregnancy (0) to time of birth (gestationMaX)
     private int energy; // MIN = 0 | MAX = 100
+    private int speed; // The amount of spaces the that the animal can move | MIN = 1 |
     private int sexNeed; // MIN = 0 | MAX = 100
+
     private int hunger; // MIN = 0 | MAX = 100
+    private int starvingCounter; // Turns that the animal has been at 100 hunger
+
+    private int maxBabyAge;
+    private int maxYAAge;
 
     private Animal mate; // tracks the mate of the animal
     private ArrayList<Animal> babies; // tracks of the animal's babies
@@ -58,6 +67,10 @@ public abstract class Animal {
 
     public int getX() {
         return x;
+    }
+
+    public int getSpeed() {
+        return speed;
     }
 
     public int getY() {
@@ -138,6 +151,14 @@ public abstract class Animal {
 
     public int getGestationMax() {
         return gestationMax;
+    }
+
+    public int getMaxBabyAge() {
+        return maxBabyAge;
+    }
+
+    public int getMaxYAAge() {
+        return maxYAAge;
     }
 
     public int getLiterSize() {
