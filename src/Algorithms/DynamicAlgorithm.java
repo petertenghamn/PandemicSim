@@ -7,7 +7,6 @@ import Algorithms.Plants.Grass;
 import Algorithms.Plants.Plant;
 import Data.SimVariables;
 
-import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
@@ -42,24 +41,25 @@ public class DynamicAlgorithm implements Interface_DynamicAlgorithm {
     private static final int ENERGY_GAINED_PER_TURN = 10; // Energy gained from resting
     private static final int ENERGY_LOST_PER_TURN = 1; // Energy lost from !resting
     private static final int MOVEMENT_ENERGY_COST = 5; // Energy cost of moving
-    private static final int REPRODUCTION_ENERGY_COST = 15; // Energy cost of having sex
+    private static final int REPRODUCTION_ENERGY_COST = 10; // Energy cost of having sex
     private static final int BIRTH_ENERGY_COST = REPRODUCTION_ENERGY_COST * 5; // Energy cost of giving birth
 
     private static final int HUNGER_GAIN_PER_TURN = 1; // Hunger gained per turn
+    private static final int STARVE_MAX = 1008; // Turns until the animal dies from starvation
 
     // HUNGER GAINED USED IN attemptToFeed()
-    private static final int SEEDLING_HUNGER_GAIN = 100; // Hunger gained from eating a SEEDLING Plant
-    private static final int SAPLING_HUNGER_GAIN = 100; // Hunger gained from eating a SAPLING Plant
+    private static final int SEEDLING_HUNGER_GAIN = 25; // Hunger gained from eating a SEEDLING Plant
+    private static final int SAPLING_HUNGER_GAIN = 85; // Hunger gained from eating a SAPLING Plant
     private static final int MATURE_HUNGER_GAIN = 100; // Hunger gained from eating a MATURE Plant
-    private static final int BABY_HUNGER_GAIN = 100; // Hunger gained from eating a BABY Animal
-    private static final int YA_HUNGER_GAIN = 100; // Hunger gained from eating a YOUNG ADULT Animal
+    private static final int BABY_HUNGER_GAIN = 50; // Hunger gained from eating a BABY Animal
+    private static final int YA_HUNGER_GAIN = 90; // Hunger gained from eating a YOUNG ADULT Animal
     private static final int ADULT_HUNGER_GAIN = 100; // Hunger gained from eating an ADULT Animal
     private static final int MOTHER_HUNGER_GAIN = 15; // Hunger gained from drinking mother's milk
 
 
     // Variables
-    private int x_Empty; // X Coordinate of spotted empty cell
-    private int y_Empty; // Y Coordinate of spotted empty cell
+    private ArrayList<Integer> xEmptyCoordinate = new ArrayList<>(); // X Coordinate of spotted empty cell
+    private ArrayList<Integer> yEmptyCoordinate = new ArrayList<>(); // Y Coordinate of spotted empty cell
 
     private ArrayList<Object> spottedObjects = new ArrayList<>(); // A list of the current entity spotted surroundings
 
@@ -75,6 +75,14 @@ public class DynamicAlgorithm implements Interface_DynamicAlgorithm {
 
     private ArrayList<Fox> foxes = new ArrayList<>(); // List of all the alive foxes in the simulation
     private ArrayList<Fox> babyFoxes = new ArrayList<>(); // List of all the new foxes in this iteration
+
+    // Variables using for testing
+    public ArrayList<Grass> TDG = new ArrayList<>(); // Total Dead Grass throughout entire simulation
+    public ArrayList<Bunny> TDB = new ArrayList<>(); // Total Dead Bunnies throughout entire simulation
+    public ArrayList<Fox> TDF = new ArrayList<>(); // Total Dead Fox throughout entire simulation
+    public ArrayList<Grass> TNG = new ArrayList<>(); // New Grass Plants throughout entire simulation
+    public ArrayList<Bunny> TNB = new ArrayList<>(); // New Bunny Animals throughout entire simulation
+    public ArrayList<Fox> TNF = new ArrayList<>(); // New Fox Animals throughout entire simulation
 
 
     // Widgets
@@ -96,29 +104,26 @@ public class DynamicAlgorithm implements Interface_DynamicAlgorithm {
      */
     private void age(Plant plant){
 
-        double MAX_SEEDLING_AGE = plant.getSeedlingMAX(); // MAX age percentage of the "Seedling" lifeStage
-        double MAX_SAPLING_AGE = plant.getSaplingMAX(); // MAX age percentage of the "Sapling" lifeStage
-
         // Age one iteration
         plant.setAge(plant.getAge() + 1);
 
         // Sets the lifeStage of the plant depending on the percentage of life lived: age / MAX age
-        if (plant.getAge() < MAX_SEEDLING_AGE){
+        if (plant.getAge() < plant.getSeedlingMAX()){
             plant.setLifeStage("Seedling");
             plant.setEdible(false);
         }
-        else if (plant.getAge() >= MAX_SEEDLING_AGE){
+        else if (plant.getSeedlingMAX() <= plant.getAge() && plant.getAge() < plant.getSaplingMAX()){
             plant.setLifeStage("Sapling");
             plant.setEdible(true);
         }
-        else if (plant.getAge() >= MAX_SAPLING_AGE){
+        else if (plant.getSaplingMAX() <= plant.getAge()){
             plant.setLifeStage("Mature");
             plant.setEdible(true);
         }
     }
 
     /** *** Part of an Overloaded Method ***
-     * Plants check their surroundings but stop looking as soon as they find an empty place.
+     * Plants check their surroundings but only care about empty spots
      * Plants search pattern is random and can also be affected by:
      *      sight: MIN - 1 MAX - 1 (hardcoded)
      *
@@ -130,15 +135,17 @@ public class DynamicAlgorithm implements Interface_DynamicAlgorithm {
      *      spottedSurroundings
      *
      * @param plant the plant that will look around it's coordinates
-     * @return The empty spots that the plant has found (1 | 0)
+     * @return If the Plant has found empty spots or not
      */
-    private int checkSurroundings(Plant plant){
+    private boolean checkSurroundings(Plant plant){
 
         ArrayList<Integer> checkingOrder = generateRandomOrder(plant.getSight()); // The order which cells will be checked
         Object spottedObject;
 
         // New object is searching so it hasn't spotted anything
         spottedObjects.clear();
+        xEmptyCoordinate.clear();
+        yEmptyCoordinate.clear();
 
         spottedObjects.add(plant);
 
@@ -150,16 +157,15 @@ public class DynamicAlgorithm implements Interface_DynamicAlgorithm {
             // True value is ignored because it means it found itself
             if (!(spottedObject instanceof Boolean)) {
 
-                // Stops searching if the cell checked is empty
-                if (spottedObject == null) {
-                    return 1;
-                } else {
-                    spottedObjects.add(spottedObject);
-                }
+               spottedObjects.add(spottedObject);
             }
         }
 
-        return 0;
+        if (xEmptyCoordinate.isEmpty()){
+            return false;
+        } else {
+            return true;
+        }
     }
 
     /** *** Part of an Overloaded Method ***
@@ -170,13 +176,27 @@ public class DynamicAlgorithm implements Interface_DynamicAlgorithm {
      */
     private void reproduce(Plant plant){
 
+        int seeds = plant.getSeedCount();
+
         // Only Mature plants can reproduce
         if (plant.getLifeStage().equals("Mature")) {
-            // Checks which species of plant it is
-            if (plant instanceof Grass) {
-                Grass seedling = new Grass(x_Empty, y_Empty, 0);
-                MAP[seedling.getX()][seedling.getY()].add(seedling);
-                babyGrass.add(seedling);
+            // Checks that the plant doesn't reproduce more than the spaces available
+            if (xEmptyCoordinate.size() < seeds){
+                seeds = xEmptyCoordinate.size();
+            }
+
+            // Amount of seeds that a plant can spread per turn
+            for (int index = 0; index < seeds - 1; index++) {
+                // Checks which species of plant it is
+                if (plant instanceof Grass) {
+                    Grass seedling = new Grass(xEmptyCoordinate.get(index), yEmptyCoordinate.get(index), 0);
+
+                    if (MAP[seedling.getX()][seedling.getY()].isEmpty()) {
+                        MAP[seedling.getX()][seedling.getY()].add(seedling);
+                        babyGrass.add(seedling);
+                    }
+                }
+
             }
         }
     }
@@ -284,6 +304,8 @@ public class DynamicAlgorithm implements Interface_DynamicAlgorithm {
 
         // New object is searching so it hasn't spotted anything
         spottedObjects.clear();
+        xEmptyCoordinate.clear();
+        yEmptyCoordinate.clear();
 
         // Adds itself as a spotted object
         spottedObjects.add(spottedObject);
@@ -310,86 +332,57 @@ public class DynamicAlgorithm implements Interface_DynamicAlgorithm {
      */
     private void calculateHunger(Animal animal) {
 
-        double deathChance = animal.getAge() / animal.getMaxAge();
+        int deathChance = animal.getStarvingCounter();
         double energy = animal.getEnergy();
         int hunger = animal.getHunger();
 
         // The animal has a increasing chance to die based on age when hunger levels are 100
         if (hunger >= 100){
 
-            // The different cases for the chances that the animal dies the closer it gets to it's MAX age
-            if (1 <= deathChance){
-                deathChance = ThreadLocalRandom.current().nextInt(98, 100); // 1/2 chance it dies
-            }
-            else if (0.9 <= deathChance){
-                deathChance = ThreadLocalRandom.current().nextInt(97, 100); // 1/3 chance it dies
-            }
-            else if (0.8 <= deathChance){
-                deathChance = ThreadLocalRandom.current().nextInt(96, 100); // 1/4 chance it dies
-            }
-            else if (0.7 <= deathChance){
-                deathChance = ThreadLocalRandom.current().nextInt(95, 100); // 1/5 chance it dies
-            }
-            else if (0.6 <= deathChance){
-                deathChance = ThreadLocalRandom.current().nextInt(92, 100); // 1/8 chance it dies
-            }
-            else if (0.5 <= deathChance){
-                deathChance = ThreadLocalRandom.current().nextInt(90, 100); // 1/10 chance it dies
-            }
-            else if (0.4 <= deathChance){
-                deathChance = ThreadLocalRandom.current().nextInt(85, 100); // 1/15 chance it dies
-            }
-            else if (0.3 <= deathChance){
-                deathChance = ThreadLocalRandom.current().nextInt(90, 100); // 1/10 chance it dies
-            }
-            else if (0.2 <= deathChance){
-                deathChance = ThreadLocalRandom.current().nextInt(95, 100); // 1/5 chance it dies
-            }
-            else if (0.1 <= deathChance){
-                deathChance = ThreadLocalRandom.current().nextInt(97, 100); // 1/3 chance it dies
-            }
-            else {
-                deathChance = ThreadLocalRandom.current().nextInt(98, 100); // 1/2 chance it dies
-            }
+            deathChance = deathChance + animal.getStarvingCounter();
+
+            animal.setStarvingCounter(animal.getStarvingCounter() + 1);
 
             // When chance of death is higher than 100% the plant dies
-            if (deathChance >= 100){
+            if (deathChance >= STARVE_MAX){
                 deadAnimals.add(animal);
             }
+        } else {
+            // Resets starving when no longer at 100 hunger
+            animal.setStarvingCounter(0);
         }
 
         // Hunger increases every turn based on animal energy
         // The more energy the animal has the less hunger it gains
         if (90 <= energy){
-            // Hunger = Hunger + x
             animal.setHunger(hunger + (HUNGER_GAIN_PER_TURN));
         }
         else if (80 <= energy){
-            animal.setHunger(hunger + (HUNGER_GAIN_PER_TURN * 2));
+            animal.setHunger(hunger + (HUNGER_GAIN_PER_TURN + 2));
         }
         else if (70 <= energy){
-            animal.setHunger(hunger + (HUNGER_GAIN_PER_TURN * 3));
+            animal.setHunger(hunger + (HUNGER_GAIN_PER_TURN + 3));
         }
         else if (60 <= energy){
-            animal.setHunger(hunger + (HUNGER_GAIN_PER_TURN * 4));
+            animal.setHunger(hunger + (HUNGER_GAIN_PER_TURN + 4));
         }
         else if (50 <= energy){
-            animal.setHunger(hunger + (HUNGER_GAIN_PER_TURN * 5));
+            animal.setHunger(hunger + (HUNGER_GAIN_PER_TURN + 5));
         }
         else if (40 <= energy){
-            animal.setHunger(hunger + (HUNGER_GAIN_PER_TURN * 6));
+            animal.setHunger(hunger + (HUNGER_GAIN_PER_TURN + 6));
         }
         else if (30 <= energy){
-            animal.setHunger(hunger + (HUNGER_GAIN_PER_TURN * 7));
+            animal.setHunger(hunger + (HUNGER_GAIN_PER_TURN + 7));
         }
         else if (20 <= energy){
-            animal.setHunger(hunger + (HUNGER_GAIN_PER_TURN * 8));
+            animal.setHunger(hunger + (HUNGER_GAIN_PER_TURN + 8));
         }
         else if (10 <= energy){
-            animal.setHunger(hunger + (HUNGER_GAIN_PER_TURN * 9));
+            animal.setHunger(hunger + (HUNGER_GAIN_PER_TURN + 9));
         }
         else{
-            animal.setHunger(hunger + (HUNGER_GAIN_PER_TURN * 10));
+            animal.setHunger(hunger + (HUNGER_GAIN_PER_TURN + 10));
         }
 
         // Hunger can not go above 100
@@ -542,29 +535,29 @@ public class DynamicAlgorithm implements Interface_DynamicAlgorithm {
         // Depending on the conditions above sexNeed will or won't be changed
         if (increaseSexNeed){
             int energy = animal.getEnergy();
+
             // SexNeed increases based on energy levels
             if (90 <= energy){
-                sexNeed = sexNeed + 10;
-            } else if (80 <= energy){
-                sexNeed = sexNeed + 9;
-            } else if (70 <= energy){
-                sexNeed = sexNeed + 8;
-            } else if (60 <= energy){
-                sexNeed = sexNeed + 7;
-            } else if (50 <= energy){
-                sexNeed = sexNeed + 6;
-            } else if (40 <= energy){
                 sexNeed = sexNeed + 5;
-            } else if (30 <= energy){
-                sexNeed = sexNeed + 4;
-            } else if (20 <= energy){
+            } else if (80 <= energy){
+                sexNeed = sexNeed + 5;
+            } else if (70 <= energy){
                 sexNeed = sexNeed + 3;
-            } else if (10 <= energy){
+            } else if (60 <= energy){
                 sexNeed = sexNeed + 2;
+            } else if (50 <= energy){
+                sexNeed = sexNeed + 2;
+            } else if (40 <= energy){
+                sexNeed = sexNeed + 2;
+            } else if (30 <= energy){
+                sexNeed = sexNeed + 1;
+            } else if (20 <= energy){
+                sexNeed = sexNeed + 1;
+            } else if (10 <= energy){
+                sexNeed = sexNeed + 1;
             } else {
                 sexNeed = sexNeed + 1;
             }
-
 
             // sexNeed can not be higher than 100
             if (sexNeed > 100){
@@ -599,10 +592,14 @@ public class DynamicAlgorithm implements Interface_DynamicAlgorithm {
                         // Checks if the animal nor the mate are pregnant
                         if (!animal.isPregnant() && !mate.isPregnant()) {
 
-                            // Both animals have to be adults
-                            if (animal.getLifeStage().equals("Adult") && mate.getLifeStage().equals("Adult")) {
-                                return true;
-                            }
+                            String animalLifeStage = animal.getLifeStage();
+                            String mateLifeStage = mate.getLifeStage();
+
+                            // Both animals have to be at least young adults
+                            return (animalLifeStage.equals("Adult") && mateLifeStage.equals("Adult"))
+                                    || (animalLifeStage.equals("Adult") && mateLifeStage.equals("Young Adult"))
+                                    || (animalLifeStage.equals("Young Adult") && mateLifeStage.equals("Adult"))
+                                    || (animalLifeStage.equals("Young Adult") && mateLifeStage.equals("Young Adult"));
                         }
                     }
                 }
@@ -855,7 +852,7 @@ public class DynamicAlgorithm implements Interface_DynamicAlgorithm {
      */
     private int generateLiterSize(Animal mother){
 
-        int maxSize = 0;
+        int maxSize;
 
         // Depends on current hunger level
         if (90 <= mother.getHunger()){
@@ -918,7 +915,7 @@ public class DynamicAlgorithm implements Interface_DynamicAlgorithm {
             spottedObject = spottedObjects.get(index);
             // Priority MATING
             // If the animal is NOT resting & hunger < sexNeed & same animal species
-            if (!animal.isResting() && animal.getHunger() >= 25 && isMate(spottedObject, animal)) {
+            if (!animal.isResting() && animal.getHunger() <= 30 && isMate(spottedObject, animal)) {
 
                 Animal mate = (Animal) spottedObject;
 
@@ -933,7 +930,7 @@ public class DynamicAlgorithm implements Interface_DynamicAlgorithm {
 
             // Priority HUNTING
             // if animal is NOT resting & hunger > sexNeed & spottedObject is food
-            else if (!animal.isResting() && animal.getHunger() >= 75 && isFood(spottedObject, animal)){
+            else if (!animal.isResting() && animal.getHunger() >= 50 && isFood(spottedObject, animal)){
 
                 if (spottedObject instanceof  Plant){
                     Plant food = (Plant) spottedObject;
@@ -960,8 +957,8 @@ public class DynamicAlgorithm implements Interface_DynamicAlgorithm {
             // Priority EXPLORING
             else if (!animal.isResting() && spottedObject == null && animal.getEnergy() > 0){
 
-                x_Priority = x_Empty;
-                y_Priority = y_Empty;
+                x_Priority = xEmptyCoordinate.get(0);
+                y_Priority = yEmptyCoordinate.get(0);
 
                 moving = true;
             }
@@ -1033,77 +1030,66 @@ public class DynamicAlgorithm implements Interface_DynamicAlgorithm {
         Plant plant;
         Animal prey;
 
-        // Checks to see if the that the object is not empty
-        if (object != null){
-            // Boolean is it self
-            if (!(object instanceof Boolean)) {
-                // Precaution if it did find it self
-                if (object != animal) {
+        // Checks if the animal is even hungry // SEEDLING HUNGER GAIN IS USED AS THE LOWEST HUNGER GAIN CASE
+        if (animal.getHunger() >= SEEDLING_HUNGER_GAIN) {
+            // Checks to see if the that the object is not empty
+            if (object != null) {
+                // Boolean is it self
+                if (!(object instanceof Boolean)) {
+                    // Precaution if it did find it self
+                    if (object != animal) {
 
-                    // Babies use their parents as their food source
-                    if (animal.getLifeStage().equals("Baby")) {
-                        if (animal.getParents() != null) {
-                            for (Animal parent : animal.getParents()) {
+                        // Babies use their parents as their food source
+                        if (animal.getLifeStage().equals("Baby")) {
+                            if (animal.getParents() != null) {
+                                for (Animal parent : animal.getParents()) {
 
-                                if (object == parent) {
-                                    return true;
+                                    if (object == parent) {
+                                        return true;
+                                    }
                                 }
                             }
-                        }
-                    } else {
+                        } else {
 
-                        // The Dietary choices available to an animal
-                        switch (animal.getDiet()) {
-                            case "Herbivore":
+                            // The Dietary choices available to an animal
+                            switch (animal.getDiet()) {
+                                case "Herbivore":
 
-                                // Herbivores can eat all plants
-                                if (object instanceof Plant) {
-                                    plant = (Plant) object;
+                                    // Herbivores can eat all plants
+                                    if (object instanceof Plant) {
+                                        plant = (Plant) object;
 
-                                    // If the plant is at an edible stage return = true;
-                                    return plant.isEdible();
-                                }
-
-                                break;
-                            case "Carnivore":
-
-                                // Carnivores can eat all Animals with low chance for cannibalism
-                                if (object instanceof Animal) {
-                                    prey = (Animal) object;
-
-                                    if (prey.getSpecies().equals(animal.getSpecies())) {
-
-                                        // Will only result to cannibalism when hunger is unbearable
-                                        if (animal.getHunger() >= 100 && random.nextBoolean()) {
-                                            return true;
-                                        } else return false;
-
-                                    } else {
-                                        return true;
+                                        // If the plant is at an edible stage return = true;
+                                        return plant.isEdible();
                                     }
-                                }
 
-                                break;
-                            case "Omnivore":
+                                    break;
+                                case "Carnivore":
 
-                                // Omnivores can eat all Plants and Animals with low chance for cannibalism
-                                if (object instanceof Plant || object instanceof Animal) {
+                                    // Carnivores can eat all Animals with low chance for cannibalism
+                                    if (object instanceof Animal) {
+                                        prey = (Animal) object;
 
-                                    prey = (Animal) object;
+                                        if (prey.getSpecies().equals(animal.getSpecies())) {
 
-                                    if (prey.getSpecies().equals(animal.getSpecies())) {
+                                            // Will only result to cannibalism when hunger is unbearable
+                                            if (animal.getHunger() >= 100 && random.nextBoolean()) {
+                                                return true;
+                                            } else return false;
 
-                                        // Will only result to cannibalism when hunger is unbearable
-                                        if (animal.getHunger() >= 99) {
+
+                                        } else {
                                             return true;
-                                        } else return false;
-
-                                    } else {
-                                        return true;
+                                        }
                                     }
-                                }
 
-                                break;
+                                    break;
+                                case "Omnivore":
+
+                                    // TODO Omnivores
+
+                                    break;
+                            }
                         }
                     }
                 }
@@ -1156,6 +1142,7 @@ public class DynamicAlgorithm implements Interface_DynamicAlgorithm {
                 hunger = 0;
             }
 
+            animal.setStarvingCounter(0);
             animal.setHunger(hunger);
         }
 
@@ -1177,23 +1164,23 @@ public class DynamicAlgorithm implements Interface_DynamicAlgorithm {
                 }
             }
 
-            // Animal gives hunger recovery depending on it's life stage * percentage of life lived
+            // Animal gives hunger recovery depending on it's life stage
             switch (prey.getLifeStage()){
                 case "Baby":{
-                    hungerGain = BABY_HUNGER_GAIN * (prey.getAge() / prey.getMaxAge());
+                    hungerGain = BABY_HUNGER_GAIN;
                     break;
                 }
                 case "Young Adult":{
-                    hungerGain = YA_HUNGER_GAIN * (prey.getAge() / prey.getMaxAge());
+                    hungerGain = YA_HUNGER_GAIN;
                     break;
                 }
                 case "Adult":{
-                    hungerGain = ADULT_HUNGER_GAIN * (prey.getAge() / prey.getMaxAge());
+                    hungerGain = ADULT_HUNGER_GAIN;
                     break;
                 }
             }
 
-            if (!evadeSuccessfully(prey, animal)){
+            /*if (!evadeSuccessfully(prey, animal)){
                 hunger = (int) (hunger - hungerGain);
 
                 if (hunger < 0){
@@ -1203,7 +1190,18 @@ public class DynamicAlgorithm implements Interface_DynamicAlgorithm {
                 animal.setHunger(hunger);
 
                 deadAnimals.add(prey);
+            }*/
+
+            hunger = (int) (hunger - hungerGain);
+
+            if (hunger < 0){
+                hunger = 0;
             }
+
+            animal.setHunger(hunger);
+            animal.setStarvingCounter(0);
+
+            deadAnimals.add(prey);
         }
     }
 
@@ -1230,9 +1228,9 @@ public class DynamicAlgorithm implements Interface_DynamicAlgorithm {
             fleeingChance = ThreadLocalRandom.current().nextInt(75,100); // 1 / 25 chance
         } else if (0 <= ageDifference){
             fleeingChance = ThreadLocalRandom.current().nextInt(50,100); // 1 / 50 chance
-        } else if (-1 > ageDifference){
+        } else if (-1 >= ageDifference){
             fleeingChance = ThreadLocalRandom.current().nextInt(40, 100); // 1 / 60 chance
-        } else if (-0.5 > ageDifference){
+        } else if (-0.5 >= ageDifference){
             fleeingChance = ThreadLocalRandom.current().nextInt(25, 100); // 1 / 85 chance
         } else if (0 > ageDifference){
             fleeingChance = ThreadLocalRandom.current().nextInt(30,100 ); // 1 / 70 chance
@@ -1510,8 +1508,8 @@ public class DynamicAlgorithm implements Interface_DynamicAlgorithm {
 
                         // *** Check Action Begins Here ***
                         if (MAP[x][y].size() == 0){
-                            x_Empty = x;
-                            y_Empty = y;
+                            xEmptyCoordinate.add(x);
+                            yEmptyCoordinate.add(y);
                         }
 
                         // return a null if the list there is empty
@@ -1548,7 +1546,7 @@ public class DynamicAlgorithm implements Interface_DynamicAlgorithm {
             // Goes through all the objects at that cell
             for (int index = 0; index < MAP[plant.getX()][plant.getY()].size(); index++){
 
-                // If the animal is still on the map get rid of it
+                // If the plant is still on the map get rid of it
                 if (MAP[plant.getX()][plant.getY()].get(index) == plant){
                     MAP[plant.getX()][plant.getY()].remove(plant);
                 }
@@ -1722,6 +1720,7 @@ public class DynamicAlgorithm implements Interface_DynamicAlgorithm {
             } else {
                 grass = new Grass(column, row, random.nextInt(25));
                 this.grass.add(grass);
+                age(grass); // Gives the grass a lifeStage
                 MAP[column][row].add(grass);
                 System.out.print(".");
             }
@@ -1738,6 +1737,7 @@ public class DynamicAlgorithm implements Interface_DynamicAlgorithm {
             } else {
                 bunny = new Bunny(column, row, random.nextInt((int) bunny.getMaxAge()), random.nextBoolean());
                 bunnies.add(bunny);
+                age(bunny);
                 MAP[column][row].add(bunny);
                 System.out.print(".");
             }
@@ -1754,6 +1754,7 @@ public class DynamicAlgorithm implements Interface_DynamicAlgorithm {
             } else {
                 fox = new Fox(column, row, random.nextInt((int) fox.getMaxAge()), random.nextBoolean());
                 foxes.add(fox);
+                age(fox);
                 MAP[column][row].add(fox);
                 System.out.print(".");
             }
@@ -1813,8 +1814,7 @@ public class DynamicAlgorithm implements Interface_DynamicAlgorithm {
     @Override
     public SimVariables calculate(SimVariables input) {
 
-        // used to track empty cells for movement and plant reproduction
-        int emptyCount;
+        Boolean spottedEmpty;
 
         // Iterates through grass turns
         for (Plant plant: grass){
@@ -1822,8 +1822,8 @@ public class DynamicAlgorithm implements Interface_DynamicAlgorithm {
             age(plant);
 
             // Plants reproduce if any cell they can see is NULL
-            emptyCount = checkSurroundings(plant);
-            if (emptyCount > 0){
+            spottedEmpty = checkSurroundings(plant);
+            if (spottedEmpty){
                 reproduce(plant);
             }
         }
@@ -1831,14 +1831,13 @@ public class DynamicAlgorithm implements Interface_DynamicAlgorithm {
         // Iterates through the bunnies turns
         for (Bunny bunny: bunnies){
 
-            /* *** USED FOR TESTING ***
-            DecimalFormat decimalFormat = new DecimalFormat("##");
+            // *** USED FOR TESTING ***
+            /*DecimalFormat decimalFormat = new DecimalFormat("##");
             System.out.println("---------");
             System.out.println("Age: " + decimalFormat.format(bunny.getAge() / (24 * 365)));
             System.out.println("Energy:  " + bunny.getEnergy());
             System.out.println("Hunger:  " + bunny.getHunger());
-            System.out.println("SexNeed: " + bunny.getSexNeed());
-             */
+            System.out.println("SexNeed: " + bunny.getSexNeed());*/
 
             age(bunny);
 
@@ -1896,7 +1895,7 @@ public class DynamicAlgorithm implements Interface_DynamicAlgorithm {
                     attemptToFeed(object, fox);
                 }
                 // If it moved to a cell with a mate then it reproduces
-                else if (isMate(object, fox)){
+                 if (isMate(object, fox)){
                     if (fox.isFemale()){
                         reproduce((Animal) object, fox);
                     }
@@ -1924,6 +1923,31 @@ public class DynamicAlgorithm implements Interface_DynamicAlgorithm {
         bunnies.addAll(babyBunnies);
         foxes.addAll(babyFoxes);
 
+        // *** USED FOR TESTING ONLY ***
+        TNG.addAll(babyGrass);
+        TNB.addAll(babyBunnies);
+        TNF.addAll(babyFoxes);
+
+        for (Plant deadGrass: deadPlants){
+            if (deadGrass instanceof Grass){
+                TDG.add((Grass) deadGrass);
+            }
+        }
+
+        for (Animal deadAnimal: deadAnimals){
+            switch (deadAnimal.getSpecies()){
+                case "Bunny":{
+                    TDB.add((Bunny) deadAnimal);
+                    break;
+                }
+                case "Fox":{
+                    TDF.add((Fox) deadAnimal);
+                    break;
+                }
+            }
+        }
+
+
         // Clear every List
         deadPlants.clear(); // Clear the List of deadPlants when all the plants have been removed from other Lists
         deadAnimals.clear(); // Clear the list of deadAnimals when all the animals have been removed from other Lists
@@ -1947,25 +1971,27 @@ public class DynamicAlgorithm implements Interface_DynamicAlgorithm {
     public static void main(String[] args) {
         // Initialize the SimVariables
         SimVariables simVariables = new SimVariables();
-        simVariables.grass = 30;
-        simVariables.bunnies = 5;
-        simVariables.foxes = 5;
+        simVariables.foxes = 0;
+        simVariables.bunnies = 15;
+        simVariables.grass = 8000;
 
         // Initialize the DynamicAlgorithm Simulation 22 38
         // TODO input MAP_LENGTH and MAP_HEIGHT from the user
-        DynamicAlgorithm simulation = new DynamicAlgorithm(12, 50,
+        DynamicAlgorithm simulation = new DynamicAlgorithm(100, 100,
                                                             simVariables.grass,
                                                             simVariables.bunnies,
                                                             simVariables.foxes);
 
-        int TOTAL_ITERATIONS = 8760; // 8760 = 1 year
+        int TOTAL_ITERATIONS = 1 * 24 * 365; // 8760 = 1 year
 
-        simulation.printMAP();
+        //simulation.printMAP();
 
         // Results after the iterations
+        System.out.println("-------------------------------------------------");
         System.out.println("Grass Population: " + simVariables.grass);
         System.out.println("Bunny Population: " + simVariables.bunnies);
         System.out.println("Fox Population:   " + simVariables.foxes);
+        System.out.println("-------------------------------------------------");
 
         for (int i = 0; i < TOTAL_ITERATIONS; i++){
 
@@ -1974,14 +2000,30 @@ public class DynamicAlgorithm implements Interface_DynamicAlgorithm {
             //simulation.printMAP();
 
             // Results after the iterations
-            System.out.println("-------------------------------------------------");
+            /*System.out.println("-------------------------------------------------");
             System.out.println("------------------ Hour: " + (i + 1) + " -------------------");
             System.out.println("Grass Population: " + simVariables.grass);
             System.out.println("Bunny Population: " + simVariables.bunnies);
             System.out.println("Fox Population:   " + simVariables.foxes);
-            System.out.println("-------------------------------------------------");
-
-
+            System.out.println("-------------------------------------------------");*/
         }
+
+        //simulation.printMAP();
+
+        System.out.println("-------------------------------------------------");
+        System.out.println("Grass Population: " + simVariables.grass);
+        System.out.println("Bunny Population: " + simVariables.bunnies);
+        System.out.println("Fox Population:   " + simVariables.foxes);
+        System.out.println("-------------------------------------------------");
+
+        System.out.println("--------------- Total babies born ---------------");
+        System.out.println("Grass: " + simulation.TNG.size());
+        System.out.println("Bunny: "  + simulation.TNB.size());
+        System.out.println("Fox: " + simulation.TNF.size());
+        System.out.println("-------------------------------------------------");
+        System.out.println("--------------- Total things dead ---------------");
+        System.out.println("Grass: " + simulation.TDG.size());
+        System.out.println("Bunny: " + simulation.TDB.size());
+        System.out.println("Fox: " + simulation.TDF.size());
     }
 }

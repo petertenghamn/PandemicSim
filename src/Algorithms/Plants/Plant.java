@@ -12,10 +12,11 @@ import javax.swing.text.StyledEditorKit;
  * @see Algorithms.DynamicAlgorithm
  */
 public abstract class Plant {
-    public Plant(int x, int y, String species, int sight, double age, int saplingAge, int matureAge) {
+    public Plant(int x, int y, String species, int sight, double age, int seedCount, int saplingAge, int matureAge) {
         this.x = x;
         this.y = y;
         this.age = age;
+        this.seedCount = seedCount;
         this.seedlingMAX = saplingAge;
         this.saplingMAX = matureAge;
         this.species = species;
@@ -27,6 +28,7 @@ public abstract class Plant {
     private double age; // MIN 0 | MAX Depends on species
 
     // *** Generated in Constructor of SubClass ***
+    private int seedCount; // Number of seeds the plant has per iteration
     private int seedlingMAX; // Age when a seedling turns into a sapling
     private int saplingMAX; // Age when a sapling turns into a mature plant
     private boolean edible; // If the plant can be eaten as a seedling
@@ -64,6 +66,10 @@ public abstract class Plant {
 
     public int getSaplingMAX() {
         return saplingMAX;
+    }
+
+    public int getSeedCount() {
+        return seedCount;
     }
 
     public boolean isEdible() {

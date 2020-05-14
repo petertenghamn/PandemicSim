@@ -31,6 +31,7 @@ public abstract class Animal {
     // Variables
     private int x; // MIN = 0 | MAX = GRID_LENGTH
     private int y; // MIN = 0 | MAX = GRID_HEIGHT
+    private int starvingCounter; // Turns that the animal has been at 100 hunger
     private double age; // MIN = 0 | MAX depends on species
     private boolean resting; // Determines if the animal can move or not
     private boolean female; // The determination of the animal's sex True = Female | False = Male
@@ -101,6 +102,14 @@ public abstract class Animal {
 
     public boolean isAlpha() {
         return alpha;
+    }
+
+    public int getStarvingCounter() {
+        return starvingCounter;
+    }
+
+    public void setStarvingCounter(int starvingCounter) {
+        this.starvingCounter = starvingCounter;
     }
 
     public String getLifeStage() {
