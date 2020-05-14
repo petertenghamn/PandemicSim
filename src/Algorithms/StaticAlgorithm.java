@@ -2,8 +2,6 @@ package Algorithms;
 
 import Data.SimVariables;
 
-import java.util.Random;
-
 /**
  * Calculates the populations for grass, bunnies, and foxes depending on static probabilities
  * this class does NOT use a map nor tracks entity Objects as probabilities depend on population not individuals
@@ -34,6 +32,32 @@ import java.util.Random;
  */
 public class StaticAlgorithm implements Interface_StaticAlgorithm {
 
+    //testing calculations
+    public static void main(String[] args) {
+        // Initialize the SimVariables
+        SimVariables simVariables = new SimVariables();
+        simVariables.grass = 1000;
+        simVariables.bunnies = 100;
+        simVariables.foxes = 10;
+
+        // Initialize the StaticAlgorithm
+        StaticAlgorithm algorithm = new StaticAlgorithm();
+
+        int TOTAL_ITERATIONS = 10;
+        System.out.println("Grass Population: " + simVariables.grass + " | " +
+                "Bunny Population: " + simVariables.bunnies + " | " +
+                "Fox Population: " + simVariables.foxes);
+
+        for (int i = 1; i < TOTAL_ITERATIONS; i++){
+            simVariables = algorithm.calculate(simVariables);
+
+            // Results after the iterations
+            System.out.println("Grass Population: " + simVariables.grass + " | " +
+                    "Bunny Population: " + simVariables.bunnies + " | " +
+                    "Fox Population: " + simVariables.foxes);
+        }
+    }
+
     /**
      * *** This is the only method that communicates outside of the class ***
      *  Using the SimVariables goes through the calculation for the different populations.
@@ -47,25 +71,39 @@ public class StaticAlgorithm implements Interface_StaticAlgorithm {
      */
     @Override
     public SimVariables calculate(SimVariables input) {
-        population_grass = input.grass;
-        population_bunny = input.bunnies;
-        population_fox = input.foxes;
+        SimVariables output = new SimVariables(input.grass, input.bunnies, input.foxes);
 
-        // Order of calculation is grass - fox - bunny | since foxes hunt in the morning
-        calculateGrassPopulation();
-        calculateFoxPopulation();
-        calculateBunnyPopulation();
+        // calculate pop changes due to one pop eating the other
+        double grassEaten = calculateGrassConsumed(input);
+        double bunniesHunted = calculateBunnyHunted(input);
 
-        return input;
+        // calculate the new populations based on the input variables and the hunting outcomes
+        output.grass = calculateGrassPopulation(input, grassEaten);
+        output.bunnies = calculateBunnyPopulation(input, grassEaten, bunniesHunted);
+        output.foxes = calculateFoxPopulation(input, bunniesHunted);
+
+        return output;
     }
 
-    // Variables
-    private int population_grass;
-    private int population_bunny;
-    private int population_fox;
+    /* ---------------------------------------------------------------------------------------------------
+        *** The methods in this section are related to the Grass Population being consumed  ***
+       ---------------------------------------------------------------------------------------------------
+     */
 
-    // Widgets
-    private Random random = new Random(); // Random Generator used in random placement in initialization
+    private double calculateGrassConsumed(SimVariables input){
+        // the bunnies currently eat more if grass is abundant
+        return (0.75 * (input.bunnies * input.grass));
+    }
+
+    /* ---------------------------------------------------------------------------------------------------
+        *** The methods in this section are related to the Bunny Population being hunted  ***
+       ---------------------------------------------------------------------------------------------------
+     */
+
+    private double calculateBunnyHunted(SimVariables input){
+        // the foxes currently hunt more if there is an abundance of bunnies
+        return (0.3 * (input.bunnies * input.foxes));
+    }
 
     /* ---------------------------------------------------------------------------------------------------
         *** The methods in this section are related to the Grass Population  ***
@@ -75,8 +113,10 @@ public class StaticAlgorithm implements Interface_StaticAlgorithm {
     /**
      *  Estimated new = 50  / iteration
      */
-    private void calculateGrassPopulation(){
-
+    private int calculateGrassPopulation(SimVariables input, double grassEaten){
+        double popChange = (((input.grass * 0.8) * 0.9) * 0.6); // Calculated growth of grass
+        popChange = (popChange * (input.grass / grassEaten)); // TEMP (might be wrong) this effects the pop negatively if the bunny pop is larger then the grass
+        return (int)(input.grass + popChange);
     }
 
     /* ---------------------------------------------------------------------------------------------------
@@ -87,8 +127,11 @@ public class StaticAlgorithm implements Interface_StaticAlgorithm {
     /**
      *  Estimated new = 3.81 * reproduction rate - death rate  / iteration
      */
-    private void calculateBunnyPopulation(){
-
+    private int calculateBunnyPopulation(SimVariables input, double grassEaten, double bunniesEaten){
+        double popChange = ((input.bunnies * (0.2 / 30)) - (input.bunnies * (0.25 / 365))); // Bunny pop growth subtracted from their death rate (Daily)
+        // TEMP (might be wrong) Grass available effects growth as well as foxes eating the bunnies
+        popChange = (popChange * (input.bunnies/grassEaten)) - (popChange * (input.bunnies/bunniesEaten));
+        return (int)(input.bunnies + popChange);
     }
 
     /* ---------------------------------------------------------------------------------------------------
@@ -99,7 +142,9 @@ public class StaticAlgorithm implements Interface_StaticAlgorithm {
     /**
      *  Estimated new = (2.22 -> 13.61) * reproduction rate - death rate / iteration
      */
-    private void calculateFoxPopulation(){
-
+    private int calculateFoxPopulation(SimVariables input, double bunniesEaten){
+        double popChange = ((input.foxes * (0.4 / 365)) - (input.foxes * (0.25 / 365))); // Fox pop growth subtracted from their death rate (Daily) (TEMP, values not based on statistics)
+        popChange = popChange * (input.foxes / bunniesEaten); // TEMP this effects the pop negatively if not enough bunnies are available to eat for the fox pop
+        return (int)(input.foxes + popChange);
     }
 }
