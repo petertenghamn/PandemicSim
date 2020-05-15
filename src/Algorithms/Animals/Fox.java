@@ -17,7 +17,7 @@ public class Fox extends Animal {
     private static final int AGE_BABY_MAX = 24 * 7 * 4; // 1 Month
     private static final int AGE_YA_MAX = 7 * 24 * 7 * 4; // 7 Months
     private static final int SIGHT = 5; // MIN = 1 | MAX = 5
-    private static final int SPEED = 3; // MIN = 1
+    private static final int SPEED = 2; // MIN = 1
     private static final int GESTATION_TIME = 45 * 24; // Time it takes for babies to be born from start pregnancy (49->58 days)
     private static final int LITER_SIZE_MAX = 6; // The MAX number of babies per pregnancy
     private static final String SPECIES = "Fox"; // The name of the species of animal
