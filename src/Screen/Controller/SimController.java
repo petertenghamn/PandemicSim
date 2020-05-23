@@ -62,7 +62,7 @@ public class SimController implements Interface_SimController {
     @Override
     public SimVariables iterateDynamicAlgorithm(SimVariables input) {
 
-        int TOTAL_ITERATIONS = 1 * 24 * 7 * 4; // 8760 = 1 year
+        int TOTAL_ITERATIONS = (3 * 24 * 7 * 4) / 24; // 8760 = 1 year
 
         for (int years = 0; years <= TOTAL_ITERATIONS; years++){
             input = dynamicAlg.calculate(input);
