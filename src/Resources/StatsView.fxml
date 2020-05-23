@@ -14,7 +14,7 @@
           <CategoryAxis label="Time in years" side="BOTTOM" fx:id="xAxis" />
         </xAxis>
         <yAxis>
-          <NumberAxis fx:id="yAxis" autoRanging="false" label="Population" side="LEFT" upperBound="100.0" />
+          <NumberAxis fx:id="yAxis" autoRanging="false" label="Population" side="LEFT" upperBound="200.0" />
         </yAxis>
       </LineChart>
       <LineChart fx:id="lineChart2" layoutX="460.0" layoutY="20.0" prefHeight="323.0" prefWidth="457.0" title="Population Growth, Dynamic">

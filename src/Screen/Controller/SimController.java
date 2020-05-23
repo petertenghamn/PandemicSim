@@ -67,35 +67,35 @@ public class SimController implements Interface_SimController {
             lineChartStaticAlg.getData().clear();
             //calculate and draw dynamic algorithm
             dynVar = iterateDynamicAlgorithm(dynVar);
-            simVariablesDynamic.add(dynVar);
+            simVariablesDynamic.add(new SimVariables(dynVar.grass, dynVar.bunnies, dynVar.foxes, true));
             drawDynamicAlgorithm(dynVar);
             //calculate and draw static algorithm
             staticVar = iterateStaticAlgorithm(staticVar);
-            simVariablesStatic.add(staticVar);
+            simVariablesStatic.add(new SimVariables(staticVar.grass, staticVar.bunnies, staticVar.foxes, false));
             drawStaticAlgorithm(staticVar);
         }
 
-        data.setStaticVariables(simVariablesDynamic);
-        data.setDynamicVariables(simVariablesStatic);
+        data.setStaticVariables(simVariablesStatic);
+        data.setDynamicVariables(simVariablesDynamic);
 
         // uploads the result to db
         database.uploadToDB(data);
-
     }
 
     @Override
     public SimVariables iterateDynamicAlgorithm(SimVariables input) {
+        SimVariables output = new SimVariables();
 
         int TOTAL_ITERATIONS = (3 * 24 * 7 * 4) / 24; // 8760 = 1 year
 
         for (int years = 0; years <= TOTAL_ITERATIONS; years++){
-            input = dynamicAlg.calculate(input);
+            output = dynamicAlg.calculate(input);
         }
 
         // scale plant results
-        input.grass = input.grass / 10;
+        output.grass = output.grass / 10;
 
-        return input;
+        return output;
     }
 
     @Override
