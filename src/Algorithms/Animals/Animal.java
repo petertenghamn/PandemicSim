@@ -54,8 +54,8 @@ public abstract class Animal {
     private int maxYAAge;
 
     private Animal mate; // tracks the mate of the animal
-    private ArrayList<Animal> babies; // tracks of the animal's babies
-    private ArrayList<Animal> parents; // tracks the animal's parents
+    private ArrayList<Animal> babies = new ArrayList<>(); // tracks of the animal's babies
+    private ArrayList<Animal> parents = new ArrayList<>(); // tracks the animal's parents
 
     // *** Initialized in Constructor of SubClass ***
     private String diet; // Type of diet Carnivore | Omnivore | Herbivore
@@ -221,12 +221,12 @@ public abstract class Animal {
         this.pregnant = pregnant;
     }
 
-    public void setBabies(ArrayList<Animal> babies) {
-        this.babies = babies;
+    public void addBabies(ArrayList<Animal> babies) {
+        this.babies.addAll(babies);
     }
 
-    public void setParents(ArrayList<Animal> parents) {
-        this.parents = parents;
+    public void addParents(ArrayList<Animal> parents) {
+        this.parents.addAll(parents);
     }
 
     public void setAlpha(boolean alpha) {
