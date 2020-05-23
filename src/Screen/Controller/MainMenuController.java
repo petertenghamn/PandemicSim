@@ -36,7 +36,7 @@ public class MainMenuController implements Interface_MainMenuController {
     }
 
     public MainMenuController(){
-        simVariables = new SimVariables(0,0,0);
+        simVariables = new SimVariables(0,0,0, true);
     }
 
     @Override

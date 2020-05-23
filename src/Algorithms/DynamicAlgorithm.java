@@ -2236,6 +2236,7 @@ public class DynamicAlgorithm implements Interface_DynamicAlgorithm {
         simVariables.foxes = 5;
         simVariables.bunnies = 190; // 20 / Year consumed by 1 Fox
         simVariables.grass = 40; // 530.62 / Year consumed by 1 bunny
+        simVariables.dynamicAlgorithm = true;
 
         // Initialize the DynamicAlgorithm Simulation 22 38
         // TODO input MAP_LENGTH and MAP_HEIGHT from the user

@@ -55,7 +55,7 @@ public class Database implements Interface_Database {
             Statement stmt = con.createStatement();
             ResultSet rs = stmt.executeQuery("select * from iteration where records_id = 1");
             while (rs.next()) {
-                variables.add(new SimVariables(rs.getInt(4), rs.getInt(3), rs.getInt(2)));
+                variables.add(new SimVariables(rs.getInt(4), rs.getInt(3), rs.getInt(2), rs.getBoolean(6)));
             }
             result.setVariables(variables);
             return result;
@@ -86,8 +86,8 @@ public class Database implements Interface_Database {
             System.out.println("--- Insert iteration data assigned to the inserted record ---");
             for (SimVariables variable : data.getVariables()){
                 stmt = con.createStatement();
-                stmt.execute("insert into iteration (fox_pop, bunny_pop, grass_pop, records_id) " +
-                        "values (" + variable.foxes + ", " + variable.bunnies + ", " + variable.grass + ", (select id from records where id = 1))");
+                stmt.execute("insert into iteration (fox_pop, bunny_pop, grass_pop, records_id, isDynamic) " +
+                        "values (" + variable.foxes + ", " + variable.bunnies + ", " + variable.grass + ", (select id from records where id = 1), " + (variable.dynamicAlgorithm ? "1" : "0") + ")");
             }
         }
         catch (Exception e) {

@@ -34,8 +34,8 @@ public class SimController implements Interface_SimController {
     @Override
     public void runProgram(int grass, int bunnies, int foxes) {
 
-        SimVariables dynVar = new SimVariables(grass,bunnies,foxes);
-        SimVariables staticVar = new SimVariables(grass,bunnies,foxes);
+        SimVariables dynVar = new SimVariables(grass,bunnies,foxes, true);
+        SimVariables staticVar = new SimVariables(grass,bunnies,foxes, false);
 
         staticAlg = new StaticAlgorithm();
         dynamicAlg = new DynamicAlgorithm(20,20,grass,bunnies,foxes);

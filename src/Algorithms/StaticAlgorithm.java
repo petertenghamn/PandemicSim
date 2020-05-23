@@ -71,7 +71,7 @@ public class StaticAlgorithm implements Interface_StaticAlgorithm {
      */
     @Override
     public SimVariables calculate(SimVariables input) {
-        SimVariables output = new SimVariables(input.grass, input.bunnies, input.foxes);
+        SimVariables output = new SimVariables(input.grass, input.bunnies, input.foxes, false);
 
         // calculate pop changes due to one pop eating the other
         float grassEaten = calculateGrassConsumed(input);
@@ -121,7 +121,7 @@ public class StaticAlgorithm implements Interface_StaticAlgorithm {
      */
     private int calculateGrassPopulation(SimVariables input, float grassEaten){
         float popChange = (((input.grass * 0.8f) * 0.9f) * 0.6f); // Calculated growth of grass
-        float growth = (grassEaten / input.grass); // TEMP (might be wrong) this effects the pop negatively if the bunny pop is larger then the grass
+        float growth = (grassEaten / input.grass); // This effects the pop negatively if the bunny pop is larger then the grass
         popChange += growth;
 
         // check within bounds
@@ -169,8 +169,8 @@ public class StaticAlgorithm implements Interface_StaticAlgorithm {
      *  Estimated new = (2.22 -> 13.61) * reproduction rate - death rate / iteration
      */
     private int calculateFoxPopulation(SimVariables input, float bunniesEaten){
-        float popChange = ((input.foxes * (0.4f / 365)) - (input.foxes * (0.25f / 365))); // Fox pop growth subtracted from their death rate (Daily) (TEMP, values not based on statistics)
-        float growth = ((bunniesEaten / 3f) / input.foxes); // TEMP this effects the pop negatively if not enough bunnies are available to eat for the fox pop
+        float popChange = ((input.foxes * (0.4f / 365)) - (input.foxes * (0.25f / 365))); // Fox pop growth subtracted from their death rate (Daily)
+        float growth = ((bunniesEaten / 3f) / input.foxes); // If the foxes growth effected by abundance of rabbits
         popChange += growth;
 
         // check within bounds

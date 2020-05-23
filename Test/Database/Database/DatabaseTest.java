@@ -15,8 +15,9 @@ class DatabaseTest {
         // generate random data to use
         GraphedData data = new GraphedData();
         ArrayList<SimVariables> variables = new ArrayList<>();
-        for (int i = 0; i < 100; i++) {
-            variables.add(new SimVariables(i, (i * 2), (i / 5)));
+        for (int i = 0; i < 25; i++) {
+            variables.add(new SimVariables(i, (i * 2), (i / 5), true));
+            variables.add(new SimVariables(i, (i * 2), (i / 5), false));
         }
         data.setVariables(variables);
 
