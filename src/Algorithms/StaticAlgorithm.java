@@ -43,7 +43,7 @@ public class StaticAlgorithm implements Interface_StaticAlgorithm {
         // Initialize the StaticAlgorithm
         StaticAlgorithm algorithm = new StaticAlgorithm();
 
-        int TOTAL_ITERATIONS = 10;
+        int TOTAL_ITERATIONS = 100;
         System.out.println("Grass Population: " + simVariables.grass + " | " +
                 "Bunny Population: " + simVariables.bunnies + " | " +
                 "Fox Population: " + simVariables.foxes);
@@ -92,7 +92,10 @@ public class StaticAlgorithm implements Interface_StaticAlgorithm {
 
     private float calculateGrassConsumed(SimVariables input){
         // the bunnies currently eat more if grass is abundant
-        return (0.75f * (input.bunnies * input.grass));
+        float output = (0.75f * ((float) input.bunnies * input.grass));
+        if (output > input.grass)
+            return input.grass;
+        return output;
     }
 
     /* ---------------------------------------------------------------------------------------------------
@@ -102,7 +105,10 @@ public class StaticAlgorithm implements Interface_StaticAlgorithm {
 
     private float calculateBunnyHunted(SimVariables input){
         // the foxes currently hunt more if there is an abundance of bunnies
-        return (0.3f * (input.bunnies * input.foxes));
+        float output = (0.5f * ((float) input.foxes * input.bunnies));
+        if (output > input.bunnies)
+            return input.bunnies;
+        return output;
     }
 
     /* ---------------------------------------------------------------------------------------------------
@@ -115,9 +121,19 @@ public class StaticAlgorithm implements Interface_StaticAlgorithm {
      */
     private int calculateGrassPopulation(SimVariables input, float grassEaten){
         float popChange = (((input.grass * 0.8f) * 0.9f) * 0.6f); // Calculated growth of grass
-        float growth = (grassEaten/input.grass); // TEMP (might be wrong) this effects the pop negatively if the bunny pop is larger then the grass
+        float growth = (grassEaten / input.grass); // TEMP (might be wrong) this effects the pop negatively if the bunny pop is larger then the grass
         popChange += growth;
-        return (int)(input.grass + popChange);
+
+        // check within bounds
+        int pop = (int)(input.grass + popChange);
+        if (pop <= 0){
+            pop = 1;
+        } else if (pop > 100){
+            pop = 100;
+        }
+
+        //return result
+        return pop;
     }
 
     /* ---------------------------------------------------------------------------------------------------
@@ -130,10 +146,18 @@ public class StaticAlgorithm implements Interface_StaticAlgorithm {
      */
     private int calculateBunnyPopulation(SimVariables input, float grassEaten, float bunniesEaten){
         float popChange = ((input.bunnies * (0.2f / 30)) - (input.bunnies * (0.25f / 365))); // Bunny pop growth subtracted from their death rate (Daily)
-        float growth = (grassEaten/input.bunnies); // Grass available to eat effect the growth
-        float hunted = (bunniesEaten/input.bunnies); // Hunted bunnies will effect the growth rate
+        float growth = (grassEaten / input.bunnies); // Grass available to eat effect the growth
+        float hunted = (bunniesEaten / input.bunnies); // Hunted bunnies will effect the growth rate
         popChange += growth - hunted;
-        return (int)(input.bunnies + popChange);
+
+        // check within bounds
+        int pop = (int)(input.bunnies + popChange);
+        if (pop <= 0){
+            pop = 1;
+        }
+
+        //return result
+        return pop;
     }
 
     /* ---------------------------------------------------------------------------------------------------
@@ -146,8 +170,16 @@ public class StaticAlgorithm implements Interface_StaticAlgorithm {
      */
     private int calculateFoxPopulation(SimVariables input, float bunniesEaten){
         float popChange = ((input.foxes * (0.4f / 365)) - (input.foxes * (0.25f / 365))); // Fox pop growth subtracted from their death rate (Daily) (TEMP, values not based on statistics)
-        float growth = (bunniesEaten / input.foxes); // TEMP this effects the pop negatively if not enough bunnies are available to eat for the fox pop
+        float growth = ((bunniesEaten / 3f) / input.foxes); // TEMP this effects the pop negatively if not enough bunnies are available to eat for the fox pop
         popChange += growth;
-        return (int)(input.foxes + popChange);
+
+        // check within bounds
+        int pop = (int)(input.foxes + popChange);
+        if (pop <= 0){
+            pop = 1;
+        }
+
+        //return result
+        return pop;
     }
 }

@@ -10,36 +10,10 @@ public class Database implements Interface_Database {
 
     private Connection con;
 
-    //move to test class when completed
-    public static void main(String[] args) {
-        //connect to the database
-        Database db = new Database();
-        db.connect();
-
-        //generate random data to use
-        GraphedData data = new GraphedData();
-        ArrayList<SimVariables> variables = new ArrayList<>();
-        for (int i = 0; i < 100; i++){
-            variables.add(new SimVariables(i,(i * 2),(i/5)));
-        }
-        data.setVariables(variables);
-
-        //call DB methods
-        System.out.println("Uploading to the database");
-        db.uploadToDB(data);
-        System.out.println("downloading IDs from the database");
-        ArrayList<Integer> ids = db.downloadResultIDs();
-        System.out.println("downloading data from the database");
-        data = db.downloadResult();
-
-        //disconnect from the database
-        db.disconnect();
-    }
-
     private void connect(){
         try {
             Class.forName("com.mysql.jdbc.Driver");
-            //here ecosimdb is database name, root is username and password
+            // here ecosimdb is database name, root is username and password
             con = DriverManager.getConnection(
                     "jdbc:mysql://localhost:3306/ecosimdb?autoReconnect=true&useSSL=false", "root", "root");
         }
@@ -48,33 +22,18 @@ public class Database implements Interface_Database {
         }
     }
 
-    private void disconnect(){
-        try {
-            con.close();
-        }
-        catch (Exception e){
-            System.out.println("Error: " + e);
-        }
-    }
-
     @Override
     public ArrayList<Integer> downloadResultIDs() {
         ArrayList<Integer> result = new ArrayList<>();
         try {
+            // connect to the database
+            connect();
             System.out.println("--- Execute Download Result ID Query ---");
             Statement stmt = con.createStatement();
             ResultSet rs = stmt.executeQuery("select * from records");
-            boolean first = true;
             while(rs.next()) {
                 Integer rID = rs.getInt(1);
                 result.add(rID);
-                if (first) {
-                    System.out.println("Found IDs");
-                    System.out.print(rID);
-                    first = false;
-                } else {
-                    System.out.print(" : " + rID);
-                }
             }
             System.out.println("");
             return result;
@@ -90,21 +49,14 @@ public class Database implements Interface_Database {
         GraphedData result = new GraphedData();
         ArrayList<SimVariables> variables = new ArrayList<>();
         try {
+            // connect to the database
+            connect();
             System.out.println("--- Execute Download Result Query ---");
             Statement stmt = con.createStatement();
             ResultSet rs = stmt.executeQuery("select * from iteration where records_id = 1");
-            boolean first = true;
             while (rs.next()) {
-                if (first) {
-                    System.out.println("Iteration data");
-                    System.out.print("[ID:" + rs.getInt(1) + "] " + rs.getInt(2) + ", " + rs.getInt(3) + ", " + rs.getInt(4));
-                    first = false;
-                } else {
-                    System.out.print(" | " + "[ID:" + rs.getInt(1) + "] " + rs.getInt(2) + ", " + rs.getInt(3) + ", " + rs.getInt(4));
-                }
-                variables.add(new SimVariables(rs.getInt(2), rs.getInt(3), rs.getInt(4)));
+                variables.add(new SimVariables(rs.getInt(4), rs.getInt(3), rs.getInt(2)));
             }
-            System.out.println("");
             result.setVariables(variables);
             return result;
         }
@@ -117,7 +69,9 @@ public class Database implements Interface_Database {
     @Override
     public void uploadToDB(GraphedData data) {
         try {
-            //check if records with id = 1 exists, if it does, remove existing before placing new
+            // connect to the database
+            connect();
+            // check if records with id = 1 exists, if it does, remove existing before placing new
             ArrayList<Integer> currentIDs = downloadResultIDs();
             if (currentIDs.contains(1)){
                 System.out.println("--- Delete Existing record at 1 in order to replace with new data ---");
