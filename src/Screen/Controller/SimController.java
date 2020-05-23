@@ -29,9 +29,7 @@ public class SimController implements Interface_SimController {
     private XYChart.Series plantsStatic = new XYChart.Series();
 
     private Database database;
-
-    private GraphedData graphedDataStatic;
-    private GraphedData graphedDataDynamic;
+    private GraphedData data;
 
     private ArrayList<SimVariables> simVariablesStatic;
     private ArrayList<SimVariables> simVariablesDynamic;
@@ -46,9 +44,7 @@ public class SimController implements Interface_SimController {
     public void runProgram(int grass, int bunnies, int foxes) {
 
         database = new Database();
-
-        graphedDataStatic = new GraphedData();
-        graphedDataDynamic = new GraphedData();
+        data = new GraphedData();
 
         simVariablesStatic = new ArrayList<>();
         simVariablesDynamic = new ArrayList<>();
@@ -79,12 +75,12 @@ public class SimController implements Interface_SimController {
             drawStaticAlgorithm(staticVar);
         }
 
-        graphedDataDynamic.setVariables(simVariablesDynamic);
-        graphedDataStatic.setVariables(simVariablesStatic);
+        data.setStaticVariables(simVariablesDynamic);
+        data.setDynamicVariables(simVariablesStatic);
 
-        // uploads the two results to db
-        database.uploadToDB(graphedDataDynamic);
-        database.uploadToDB(graphedDataStatic);
+        // uploads the result to db
+        database.uploadToDB(data);
+
     }
 
     @Override

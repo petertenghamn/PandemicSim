@@ -1,20 +1,32 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.scene.chart.*?>
-<?import javafx.scene.control.*?>
-<?import javafx.scene.layout.*?>
+<?import javafx.scene.chart.CategoryAxis?>
+<?import javafx.scene.chart.LineChart?>
+<?import javafx.scene.chart.NumberAxis?>
+<?import javafx.scene.chart.PieChart?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.layout.AnchorPane?>
 
-<AnchorPane prefHeight="720.0" prefWidth="960.0" xmlns="http://javafx.com/javafx/10.0.2-internal" xmlns:fx="http://javafx.com/fxml/1" fx:controller="Screen.Controller.StatsController">
+<AnchorPane prefHeight="720.0" prefWidth="960.0" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="Screen.Controller.StatsController">
    <children>
-      <LineChart fx:id="lineChart" layoutX="14.0" layoutY="20.0" prefHeight="323.0" prefWidth="457.0" title="Average Population Growth">
+      <LineChart fx:id="lineChart" layoutX="14.0" layoutY="20.0" prefHeight="323.0" prefWidth="457.0" title="Population Growth, Static">
         <xAxis>
           <CategoryAxis label="Time in years" side="BOTTOM" fx:id="xAxis" />
         </xAxis>
         <yAxis>
-          <NumberAxis fx:id="yAxis" autoRanging="false" label="Population" side="LEFT" upperBound="25.0" />
+          <NumberAxis fx:id="yAxis" autoRanging="false" label="Population" side="LEFT" upperBound="100.0" />
         </yAxis>
       </LineChart>
-      <PieChart fx:id="pieChart" layoutX="472.0" layoutY="20.0" prefHeight="323.0" prefWidth="396.0" title="Average Population Size" />
+      <LineChart fx:id="lineChart2" layoutX="460.0" layoutY="20.0" prefHeight="323.0" prefWidth="457.0" title="Population Growth, Dynamic">
+         <xAxis>
+            <CategoryAxis label="Time in years" side="BOTTOM" fx:id="xAxis1" />
+         </xAxis>
+         <yAxis>
+            <NumberAxis fx:id="yAxis1" autoRanging="false" label="Population" side="LEFT" upperBound="100.0" />
+         </yAxis>
+      </LineChart>
+      <PieChart fx:id="pieChart" layoutX="81.0" layoutY="360.0" prefHeight="258.0" prefWidth="323.0" title="Final Population Size, Static" />
       <Button fx:id="backBtn" layoutX="460.0" layoutY="681.0" mnemonicParsing="false" onAction="#backBtnAction" text="Back" />
+      <PieChart fx:id="pieChart2" layoutX="527.0" layoutY="360.0" prefHeight="258.0" prefWidth="323.0" title="Final Population Size, Dynamic" />
    </children>
 </AnchorPane>

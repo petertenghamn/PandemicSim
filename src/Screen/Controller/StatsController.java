@@ -1,5 +1,8 @@
 package Screen.Controller;
 
+import Data.GraphedData;
+import Data.SimVariables;
+import Database.Database;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -10,30 +13,41 @@ import javafx.scene.chart.*;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.ResourceBundle;
-import java.util.concurrent.ThreadLocalRandom;
 
 public class StatsController implements Interface_StatsController, Initializable {
 
 
     @FXML private LineChart<?, ?> lineChart;
+    @FXML private LineChart<?, ?> lineChart2;
 
     @FXML private PieChart pieChart;
+    @FXML private PieChart pieChart2;
 
-    // Test values for the line chart and pie chart
-    private int[] testValues1 = new int[20];
-    private int[] testValues2 = new int[20];
-    private int[] testValues3 = new int[20];
+    private Database database;
 
-    //TODO maybe adding a counter for number som simulations done (all time)
+    private ArrayList<SimVariables> simVariablesStatic;
+    private ArrayList<SimVariables> simVariablesDynamic;
+
+
 
     // calls these two methods on start
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
-        drawGraph();
-        drawPieChart();
-    }
+        // downloads the result and puts it into array lists
+        database = new Database();
+        GraphedData data = database.downloadResult();
 
+        simVariablesStatic = data.getStaticVariables();
+        simVariablesDynamic = data.getDynamicVariables();
+
+        drawGraphStatic();
+        drawPieChartStatic();
+
+        drawGraphDynamic();
+        drawPieChartDynamic();
+    }
 
     @Override
     public void downloadResult(int resultID) {
@@ -41,15 +55,8 @@ public class StatsController implements Interface_StatsController, Initializable
     }
 
     @Override
-    public void drawGraph() {
+    public void drawGraphStatic() {
         // draws a chart based on the inputs from the DB (Only test values for now)
-
-        // fills testValues arrays with random numbers
-        for (int i = 0; i < 20; i++){
-            testValues1[i] = ThreadLocalRandom.current().nextInt(0,25);
-            testValues2[i] = ThreadLocalRandom.current().nextInt(0,25);
-            testValues3[i] = ThreadLocalRandom.current().nextInt(0,25);
-        }
 
         // Creating the lines
         XYChart.Series foxes = new XYChart.Series();
@@ -57,18 +64,18 @@ public class StatsController implements Interface_StatsController, Initializable
         XYChart.Series plants = new XYChart.Series();
 
         // name for the lines
-        foxes.setName("Foxes: " + testValues1[19]); // 19 simulates the last number. need to be changed later
-        bunnies.setName("Bunnies: " + testValues2[19]);
-        plants.setName("Plants: " + testValues3[19]);
+        foxes.setName("Foxes: " + simVariablesStatic.get(simVariablesStatic.size()-1).foxes);
+        bunnies.setName("Bunnies: " + simVariablesStatic.get(simVariablesStatic.size()-1).bunnies);
+        plants.setName("Plants: " + simVariablesStatic.get(simVariablesStatic.size()-1).grass);
 
-        // adds data to each line (20 times) from the test values
-        for (int i = 0; i < 20; i++){
+        // adds data to each line from the simVariablesStatic
+        for (int i = 0; i < simVariablesStatic.size(); i++){
 
             String index = Integer.toString(i);
 
-            foxes.getData().add(new XYChart.Data<>(index,testValues1[i]));
-            bunnies.getData().add(new XYChart.Data<>(index,testValues2[i]));
-            plants.getData().add(new XYChart.Data<>(index,testValues3[i]));
+            foxes.getData().add(new XYChart.Data<>(index,simVariablesStatic.get(i).foxes));
+            bunnies.getData().add(new XYChart.Data<>(index,simVariablesStatic.get(i).bunnies));
+            plants.getData().add(new XYChart.Data<>(index,simVariablesStatic.get(i).grass));
         }
 
         // adds the lines to the line chart
@@ -77,16 +84,57 @@ public class StatsController implements Interface_StatsController, Initializable
 
     }
 
-    private void drawPieChart() {
+    private void drawPieChartStatic() {
         //method that draws the pie chart
 
         ObservableList<PieChart.Data> pieChartData = FXCollections.observableArrayList(
-                new PieChart.Data("Foxes", testValues1[19]), // 19 = the last value in each array
-                new PieChart.Data("Bunnies", testValues2[19]),
-                new PieChart.Data("Plants", testValues3[19]));
-
+                new PieChart.Data("Foxes", simVariablesStatic.get(simVariablesStatic.size()-1).foxes),
+                new PieChart.Data("Bunnies", simVariablesStatic.get(simVariablesStatic.size()-1).bunnies),
+                new PieChart.Data("Plants", simVariablesStatic.get(simVariablesStatic.size()-1).grass));
 
         pieChart.setData(pieChartData);
+    }
+
+    @Override
+    public void drawGraphDynamic() {
+        // draws a chart based on the inputs from the DB (Only test values for now)
+
+        // Creating the lines
+        XYChart.Series foxes = new XYChart.Series();
+        XYChart.Series bunnies = new XYChart.Series();
+        XYChart.Series plants = new XYChart.Series();
+
+        // name for the lines
+        foxes.setName("Foxes: " + simVariablesDynamic.get(simVariablesDynamic.size()-1).foxes);
+        bunnies.setName("Bunnies: " + simVariablesDynamic.get(simVariablesDynamic.size()-1).bunnies);
+        plants.setName("Plants: " + simVariablesDynamic.get(simVariablesDynamic.size()-1).grass);
+
+        // adds data to each line from the simVariablesStatic
+        for (int i = 0; i < simVariablesDynamic.size(); i++){
+
+            String index = Integer.toString(i);
+
+            foxes.getData().add(new XYChart.Data<>(index,simVariablesDynamic.get(i).foxes));
+            bunnies.getData().add(new XYChart.Data<>(index,simVariablesDynamic.get(i).bunnies));
+            plants.getData().add(new XYChart.Data<>(index,simVariablesDynamic.get(i).grass));
+        }
+
+        // adds the lines to the line chart
+        lineChart2.setCreateSymbols(false);
+        lineChart2.getData().addAll(foxes, bunnies, plants);
+    }
+
+    private void drawPieChartDynamic() {
+
+        //method that draws the pie chart
+
+        ObservableList<PieChart.Data> pieChartData = FXCollections.observableArrayList(
+                new PieChart.Data("Foxes", simVariablesDynamic.get(simVariablesDynamic.size()-1).foxes),
+                new PieChart.Data("Bunnies", simVariablesDynamic.get(simVariablesDynamic.size()-1).bunnies),
+                new PieChart.Data("Plants", simVariablesDynamic.get(simVariablesDynamic.size()-1).grass));
+
+        pieChart2.setData(pieChartData);
+
     }
 
     // method that switches back to main menu
