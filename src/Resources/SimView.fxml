@@ -11,7 +11,7 @@
             <CategoryAxis label="Time in years" side="BOTTOM" fx:id="xAxisDynamic" />
          </xAxis>
          <yAxis>
-            <NumberAxis fx:id="yAxisDynamic" autoRanging="false" label="Population" side="LEFT" upperBound="25.0" />
+            <NumberAxis fx:id="yAxisDynamic" autoRanging="false" label="Population" side="LEFT" upperBound="100.0" />
          </yAxis>
       </LineChart>
         <LineChart fx:id="lineChartStaticAlg" layoutX="527.0" layoutY="38.0" prefHeight="317.0" prefWidth="400.0" title="Static Algorithm,  Population Growth">
@@ -19,7 +19,7 @@
                 <CategoryAxis label="Time in years" side="BOTTOM" fx:id="xAxisStaic" />
             </xAxis>
             <yAxis>
-                <NumberAxis fx:id="yAxisStatic" autoRanging="false" label="Population" side="LEFT" upperBound="25.0" />
+                <NumberAxis fx:id="yAxisStatic" autoRanging="false" label="Population" side="LEFT" upperBound="100.0" />
             </yAxis>
         </LineChart>
         <Button fx:id="backBtn" layoutX="460.0" layoutY="681.0" mnemonicParsing="false" onAction="#backBtnAction" text="Back" />

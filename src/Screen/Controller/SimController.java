@@ -2,7 +2,9 @@ package Screen.Controller;
 
 import Algorithms.DynamicAlgorithm;
 import Algorithms.StaticAlgorithm;
+import Data.GraphedData;
 import Data.SimVariables;
+import Database.Database;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.chart.LineChart;
@@ -10,6 +12,7 @@ import javafx.scene.chart.XYChart;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 
 public class SimController implements Interface_SimController {
 
@@ -25,6 +28,14 @@ public class SimController implements Interface_SimController {
     private XYChart.Series bunniesStatic = new XYChart.Series();
     private XYChart.Series plantsStatic = new XYChart.Series();
 
+    private Database database;
+
+    private GraphedData graphedDataStatic;
+    private GraphedData graphedDataDynamic;
+
+    private ArrayList<SimVariables> simVariablesStatic;
+    private ArrayList<SimVariables> simVariablesDynamic;
+
     // counter used for sync the graphs
     private int counter = 0;
 
@@ -33,6 +44,14 @@ public class SimController implements Interface_SimController {
 
     @Override
     public void runProgram(int grass, int bunnies, int foxes) {
+
+        database = new Database();
+
+        graphedDataStatic = new GraphedData();
+        graphedDataDynamic = new GraphedData();
+
+        simVariablesStatic = new ArrayList<>();
+        simVariablesDynamic = new ArrayList<>();
 
         SimVariables dynVar = new SimVariables(grass,bunnies,foxes, true);
         SimVariables staticVar = new SimVariables(grass,bunnies,foxes, false);
@@ -52,11 +71,20 @@ public class SimController implements Interface_SimController {
             lineChartStaticAlg.getData().clear();
             //calculate and draw dynamic algorithm
             dynVar = iterateDynamicAlgorithm(dynVar);
+            simVariablesDynamic.add(dynVar);
             drawDynamicAlgorithm(dynVar);
             //calculate and draw static algorithm
             staticVar = iterateStaticAlgorithm(staticVar);
+            simVariablesStatic.add(staticVar);
             drawStaticAlgorithm(staticVar);
         }
+
+        graphedDataDynamic.setVariables(simVariablesDynamic);
+        graphedDataStatic.setVariables(simVariablesStatic);
+
+        // uploads the two results to db
+        database.uploadToDB(graphedDataDynamic);
+        database.uploadToDB(graphedDataStatic);
     }
 
     @Override
