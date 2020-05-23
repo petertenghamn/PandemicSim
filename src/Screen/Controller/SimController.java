@@ -38,7 +38,7 @@ public class SimController implements Interface_SimController {
         SimVariables staticVar = new SimVariables(grass,bunnies,foxes);
 
         staticAlg = new StaticAlgorithm();
-        dynamicAlg = new DynamicAlgorithm(50,50,grass,bunnies,foxes);
+        dynamicAlg = new DynamicAlgorithm(20,20,grass,bunnies,foxes);
 
         // removes dots on the lines
         lineChartDynamicAlg.setCreateSymbols(false);
@@ -62,7 +62,7 @@ public class SimController implements Interface_SimController {
     @Override
     public SimVariables iterateDynamicAlgorithm(SimVariables input) {
 
-        int TOTAL_ITERATIONS = 3 * 24 * 7 * 4; // 8760 = 1 year
+        int TOTAL_ITERATIONS = 1 * 24 * 7 * 4; // 8760 = 1 year
 
         for (int years = 0; years <= TOTAL_ITERATIONS; years++){
             input = dynamicAlg.calculate(input);
