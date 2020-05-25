@@ -22,7 +22,7 @@
             <CategoryAxis label="Time in years" side="BOTTOM" fx:id="xAxis1" />
          </xAxis>
          <yAxis>
-            <NumberAxis fx:id="yAxis1" autoRanging="false" label="Population" side="LEFT" upperBound="100.0" />
+            <NumberAxis fx:id="yAxis1" autoRanging="false" label="Population" side="LEFT" upperBound="200.0" />
          </yAxis>
       </LineChart>
       <PieChart fx:id="pieChart" layoutX="81.0" layoutY="360.0" prefHeight="258.0" prefWidth="323.0" title="Final Population Size, Static" />

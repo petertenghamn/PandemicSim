@@ -19,7 +19,7 @@
                 <CategoryAxis label="Time in years" side="BOTTOM" fx:id="xAxisStaic" />
             </xAxis>
             <yAxis>
-                <NumberAxis fx:id="yAxisStatic" autoRanging="false" label="Population" side="LEFT" upperBound="100.0" />
+                <NumberAxis fx:id="yAxisStatic" autoRanging="false" label="Population" side="LEFT" upperBound="200.0" />
             </yAxis>
         </LineChart>
         <Button fx:id="backBtn" layoutX="460.0" layoutY="681.0" mnemonicParsing="false" onAction="#backBtnAction" text="Back" />
