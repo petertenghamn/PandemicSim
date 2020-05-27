@@ -9,7 +9,7 @@
 
 <AnchorPane prefHeight="720.0" prefWidth="960.0" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="Screen.Controller.StatsController">
    <children>
-      <LineChart fx:id="lineChart" layoutX="14.0" layoutY="20.0" prefHeight="323.0" prefWidth="457.0" title="Population Growth, Static">
+      <LineChart fx:id="lineChart" layoutX="489.0" layoutY="35.0" prefHeight="323.0" prefWidth="457.0" title="Population Growth, Static">
         <xAxis>
           <CategoryAxis label="Time in years" side="BOTTOM" fx:id="xAxis" />
         </xAxis>
@@ -17,7 +17,7 @@
           <NumberAxis fx:id="yAxis" autoRanging="false" label="Population" side="LEFT" upperBound="200.0" />
         </yAxis>
       </LineChart>
-      <LineChart fx:id="lineChart2" layoutX="460.0" layoutY="20.0" prefHeight="323.0" prefWidth="457.0" title="Population Growth, Dynamic">
+      <LineChart fx:id="lineChart2" layoutX="24.0" layoutY="35.0" prefHeight="323.0" prefWidth="457.0" title="Population Growth, Dynamic">
          <xAxis>
             <CategoryAxis label="Time in years" side="BOTTOM" fx:id="xAxis1" />
          </xAxis>
@@ -25,8 +25,8 @@
             <NumberAxis fx:id="yAxis1" autoRanging="false" label="Population" side="LEFT" upperBound="200.0" />
          </yAxis>
       </LineChart>
-      <PieChart fx:id="pieChart" layoutX="81.0" layoutY="360.0" prefHeight="258.0" prefWidth="323.0" title="Final Population Size, Static" />
+      <PieChart fx:id="pieChart" layoutX="556.0" layoutY="375.0" prefHeight="258.0" prefWidth="323.0" title="Final Population Size, Static" />
       <Button fx:id="backBtn" layoutX="460.0" layoutY="681.0" mnemonicParsing="false" onAction="#backBtnAction" text="Back" />
-      <PieChart fx:id="pieChart2" layoutX="527.0" layoutY="360.0" prefHeight="258.0" prefWidth="323.0" title="Final Population Size, Dynamic" />
+      <PieChart fx:id="pieChart2" layoutX="91.0" layoutY="375.0" prefHeight="258.0" prefWidth="323.0" title="Final Population Size, Dynamic" />
    </children>
 </AnchorPane>
